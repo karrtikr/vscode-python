@@ -5,13 +5,21 @@ import { nbformat } from '@jupyterlab/coreutils';
 import * as assert from 'assert';
 import * as fs from 'fs-extra';
 import * as path from 'path';
+import { mergeStatic } from 'rxjs/operators/merge';
 import { Disposable } from 'vscode';
 
 import { EXTENSION_ROOT_DIR } from '../../client/common/constants';
 import { IFileSystem } from '../../client/common/platform/types';
 import { JupyterExecution } from '../../client/datascience/jupyterExecution';
 import { IConnectionInfo, JupyterProcess } from '../../client/datascience/jupyterProcess';
-import { IJupyterExecution, INotebookImporter, INotebookProcess, INotebookServer } from '../../client/datascience/types';
+import {
+    CellState,
+    ICell,
+    IJupyterExecution,
+    INotebookImporter,
+    INotebookProcess,
+    INotebookServer
+} from '../../client/datascience/types';
 import { Cell, ICellViewModel } from '../../datascience-ui/history-react/cell';
 import { generateTestState } from '../../datascience-ui/history-react/mainPanelState';
 import { DataScienceIocContainer } from './dataScienceIocContainer';
@@ -89,9 +97,7 @@ suite('Jupyter notebook tests', () => {
         }
     }
 
-    async function verifyCell(index: number, code: string, mimeType: string, cellType: string, verifyValue : (data: any) => void) : Promise<void> {
-        // Verify results of an execute
-        const cells = await jupyterServer.execute(code, path.join(srcDirectory(), 'foo.py'), 2);
+    function verifyCellOutput(cells: ICell[], index: number, mimeType: string, cellType: string, verifyValue : (data: any) => void) {
         assert.equal(cells.length, 1, `${index}: Wrong number of cells returned`);
         if (cellType === 'code') {
             assert.equal(cells[0].data.cell_type, cellType, `${index}: Wrong type of cell returned`);
@@ -120,6 +126,12 @@ suite('Jupyter notebook tests', () => {
             assert.ok(error, 'Error not found when expected');
             verifyValue(error);
         }
+    }
+
+    async function verifyCell(index: number, code: string, mimeType: string, cellType: string, verifyValue : (data: any) => void) : Promise<void> {
+        // Verify results of an execute
+        const cells = await jupyterServer.execute(code, path.join(srcDirectory(), 'foo.py'), 2);
+        verifyCellOutput(cells, index, mimeType, cellType, verifyValue);
     }
 
     function testMimeTypes(types : {code: string; mimeType: string; cellType: string; verifyValue(data: any): void}[]) {
@@ -247,6 +259,98 @@ suite('Jupyter notebook tests', () => {
         await verifyError('a', `name 'a' is not defined`);
     });
 
+    runTest('Markdown order', async () => {
+        const server = await jupyterServer.start();
+        if (!server) {
+            assert.fail('Server not created');
+        }
+
+        const markdown1 = '#%% [markdown]\r\n# #HEADER1';
+        const markdown2 = '#%% [markdown]\r\n# #HEADER2';
+        const cell1 = '#%% Cell 1\r\nprint("hello")';
+
+        const data = [
+            {
+                mimeType: 'text/plain',
+                cellType: 'markdown',
+                verifyValue: (d) => assert.equal(d, '#HEADER1', 'Markdown incorrect')
+            },
+            {
+                mimeType: 'text/plain',
+                cellType: 'code',
+                verifyValue: (d) => assert.equal(d, 'hello', 'Cell output incorrect')
+            },
+            {
+                mimeType: 'text/plain',
+                cellType: 'markdown',
+                verifyValue: (d) => assert.equal(d, '#HEADER2', 'Markdown incorrect')
+            }
+        ];
+
+        // Execute all of the observables.
+        const m1 = jupyterServer.executeObservable(markdown1, 'foo.py', 0);
+        const c1 = jupyterServer.executeObservable(cell1, 'foo.py', 0);
+        const m2 = jupyterServer.executeObservable(markdown2, 'foo.py', 0);
+
+        // Merge them together in order
+        const merged = mergeStatic(m1, c1, m2);
+
+        // Iterate through their output.
+        let index = 0;
+        let currentState = CellState.init;
+        let cell;
+        merged.subscribe(
+            (cells) => {
+                // We should get a number of callbacks.
+                // 3 for the init state - this is what makes the cells show up in the UI. Check the order, this was the bug.
+                // 1 for the execute state for the code cell
+                // 1 for the finish state for the code cell.
+
+                switch (currentState) {
+                case CellState.init:
+                default:
+                    assert.equal(cells.length, 1, 'Too many cells');
+
+                    // Check we have our data for markdown and we are initing for code
+                    cell = cells[0];
+                    assert.equal(
+                        cell.data.cell_type, data[index].cellType, 'Wrong cell type in next call');
+                    assert.ok(
+                        (cell.state === CellState.finished && cell.data.cell_type === 'markdown') ||
+                        (cell.state === CellState.init && cell.data.cell_type === 'code'),
+                        'Wrong cell state in next call');
+                    if (cell.data.cell_type !== 'code') {
+                        verifyCellOutput(cells, 0, data[index].mimeType, data[index].cellType, data[index].verifyValue);
+                    }
+
+                    index += 1;
+                    if (index >= 3) {
+                        currentState = CellState.executing;
+                    }
+                    break;
+
+                case CellState.executing:
+                    // Should be a single cell that hits this state
+                    cell = cells[0];
+                    assert.equal(
+                        cell.data.cell_type, 'code', 'Cell other than code is executing');
+                    currentState = CellState.finished;
+                    break;
+
+                case CellState.finished:
+                    // Should be a single cell that hits this state
+                    cell = cells[0];
+                    assert.equal(
+                        cell.data.cell_type, 'code', 'Cell other than code is executing');
+                    verifyCellOutput(cells, 0, data[1].mimeType, data[1].cellType, data[1].verifyValue);
+                    break;
+                }
+            },
+            (err) => {
+                assert.fail(err.toString());
+            });
+    });
+
     testMimeTypes(
         [
             {
@@ -317,4 +421,5 @@ plt.show()`,
     // - changing directories
     // - Restart
     // - Error types
+    // - Markdown doesn't come out a different position than it was input (issue #3250)
 });

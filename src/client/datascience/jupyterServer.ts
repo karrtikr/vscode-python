@@ -21,6 +21,7 @@ import * as localize from '../common/utils/localize';
 import { RegExpValues } from './constants';
 import { JupyterInstallError } from './jupyterInstallError';
 import { CellState, ICell, IJupyterExecution, INotebookProcess, INotebookServer } from './types';
+import { JupyterServerHelper } from './jupyterServerHelper';
 
 // This code is based on the examples here:
 // https://www.npmjs.com/package/@jupyterlab/services
@@ -139,26 +140,9 @@ export class JupyterServer implements INotebookServer {
     }
 
     public execute(code : string, file: string, line: number) : Promise<ICell[]> {
-        // Create a deferred that we'll fire when we're done
-        const deferred = createDeferred<ICell[]>();
-
         // Attempt to evaluate this cell in the jupyter notebook
         const observable = this.executeObservable(code, file, line);
-        let output: ICell[];
-
-        observable.subscribe(
-            (cells: ICell[]) => {
-                output = cells;
-            },
-            (error) => {
-                deferred.reject(error);
-            },
-            () => {
-                deferred.resolve(output);
-            });
-
-        // Wait for the execution to finish
-        return deferred.promise;
+        return JupyterServerHelper.convertToPromise(observable);
     }
 
     public executeObservable = (code: string, file: string, line: number) : Observable<ICell[]> => {
@@ -166,29 +150,26 @@ export class JupyterServer implements INotebookServer {
         if (this.session) {
 
             // Replace windows line endings with unix line endings.
-            const copy = code.replace(/\r\n/g, '\n');
+            const split = JupyterServerHelper.splitForMarkdown(code, line);
 
             // Determine if we have a markdown cell/ markdown and code cell combined/ or just a code cell
-            const split = copy.split('\n');
-            const firstLine = split[0];
-            if (RegExpValues.PythonMarkdownCellMarker.test(firstLine)) {
+            if (split.hasMarkdown) {
                 // We have at least one markdown. We might have to split it if there any lines that don't begin
                 // with #
-                const firstNonMarkdown = split.findIndex((l : string) => l.trim().length > 0 && !l.trim().startsWith('#'));
-                if (firstNonMarkdown >= 0) {
+                if (split.second && split.secondLineOffset) {
                     // We need to combine results
-                    return this.combineObservables(
-                        this.executeMarkdownObservable(split.slice(0, firstNonMarkdown).join('\n'), file, line),
-                        this.executeCodeObservable(split.slice(firstNonMarkdown).join('\n'), file, line + firstNonMarkdown));
+                    return JupyterServerHelper.combineObservables(
+                        this.executeMarkdownObservable(split.first, file, line),
+                        this.executeCodeObservable(split.second, file, line + split.secondLineOffset));
                 } else {
                     // Just a normal markdown case
-                    return this.combineObservables(
-                        this.executeMarkdownObservable(copy, file, line));
+                    return JupyterServerHelper.combineObservables(
+                        this.executeMarkdownObservable(split.first, file, line));
                 }
             } else {
                 // Normal code case
-                return this.combineObservables(
-                    this.executeCodeObservable(copy, file, line));
+                return JupyterServerHelper.combineObservables(
+                    this.executeCodeObservable(split.first, file, line));
             }
         }
 
@@ -418,49 +399,11 @@ export class JupyterServer implements INotebookServer {
         return source;
     }
 
-    private combineObservables = (...args : Observable<ICell>[]) : Observable<ICell[]> => {
-        return new Observable<ICell[]>(subscriber => {
-            // When all complete, we have our results
-            const results : { [id : string] : ICell } = {};
-
-            args.forEach(o => {
-                o.subscribe(c => {
-                    results[c.id] = c;
-
-                    // Convert to an array
-                    const array = Object.keys(results).map((k : string) => {
-                        return results[k];
-                    });
-
-                    // Update our subscriber of our total results if we have that many
-                    if (array.length === args.length) {
-                        subscriber.next(array);
-
-                        // Complete when everybody is finished
-                        if (array.every(a => a.state === CellState.finished || a.state === CellState.error)) {
-                            subscriber.complete();
-                        }
-                    }
-                },
-                e => {
-                    subscriber.error(e);
-                });
-            });
-        });
-    }
-
-    private appendLineFeed(arr : string[], modifier? : (s : string) => string) {
-        return arr.map((s: string, i: number) => {
-            const out = modifier ? modifier(s) : s;
-            return i === arr.length - 1 ? `${out}` : `${out}\n`;
-        });
-    }
-
     private executeMarkdownObservable = (code: string, file: string, line: number) : Observable<ICell> => {
 
         return new Observable<ICell>(subscriber => {
             // Generate markdown by stripping out the comment and markdown header
-            const markdown = this.appendLineFeed(code.split('\n').slice(1), s => s.trim().slice(1).trim());
+            const markdown = JupyterServerHelper.extractMarkdown(code);
 
             const cell: ICell = {
                 id: uuid(),
@@ -553,7 +496,7 @@ export class JupyterServer implements INotebookServer {
             // Start out empty;
             const cell: ICell = {
                 data: {
-                    source: this.appendLineFeed(code.split('\n')),
+                    source: JupyterServerHelper.extractCode(code),
                     cell_type: 'code',
                     outputs: [],
                     metadata: {},

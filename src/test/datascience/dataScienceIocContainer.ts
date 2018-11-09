@@ -29,22 +29,41 @@ import {
 import { ICondaService, IInterpreterService } from '../../client/interpreter/contracts';
 import { UnitTestIocContainer } from '../unittests/serviceRegistry';
 import { MockPythonExecutionService } from './executionServiceMock';
+import { MockJupyterExecution } from './jupyterExecutionMock';
+import { MockJupyterImporter } from './jupyterImporterMock';
+import { MockJupyterServer } from './juypterServerMock';
 
 export class DataScienceIocContainer extends UnitTestIocContainer {
-    constructor() {
+    private useMockJupyter : boolean;
+
+    constructor(forceFull? : boolean) {
         super();
+        // If we are running a nightly build, force a full integration test
+        const buildReason = process.env['Build.Reason'];
+        if (forceFull || (buildReason && /Schedule/.test(buildReason))) {
+            this.useMockJupyter = false;
+        } else {
+            this.useMockJupyter = true;
+        }
     }
 
     public registerDataScienceTypes() {
         this.registerFileSystemTypes();
-        this.serviceManager.addSingleton<IJupyterExecution>(IJupyterExecution, JupyterExecution);
         this.serviceManager.addSingleton<IHistoryProvider>(IHistoryProvider, HistoryProvider);
         this.serviceManager.add<IHistory>(IHistory, History);
-        this.serviceManager.add<INotebookImporter>(INotebookImporter, JupyterImporter);
-        this.serviceManager.add<INotebookServer>(INotebookServer, JupyterServer);
-        this.serviceManager.add<INotebookProcess>(INotebookProcess, JupyterProcess);
         this.serviceManager.addSingleton<ICodeCssGenerator>(ICodeCssGenerator, CodeCssGenerator);
         this.serviceManager.addSingleton<IStatusProvider>(IStatusProvider, StatusProvider);
+        this.serviceManager.add<INotebookProcess>(INotebookProcess, JupyterProcess);
+
+        if (this.useMockJupyter) {
+            this.serviceManager.addSingleton<IJupyterExecution>(IJupyterExecution, MockJupyterExecution);
+            this.serviceManager.add<INotebookImporter>(INotebookImporter, MockJupyterImporter);
+            this.serviceManager.add<INotebookServer>(INotebookServer, MockJupyterServer);
+        } else {
+            this.serviceManager.addSingleton<IJupyterExecution>(IJupyterExecution, JupyterExecution);
+            this.serviceManager.add<INotebookImporter>(INotebookImporter, JupyterImporter);
+            this.serviceManager.add<INotebookServer>(INotebookServer, JupyterServer);
+        }
 
         // Also setup a mock execution service and interpreter service
         const logger = TypeMoq.Mock.ofType<ILogger>();
