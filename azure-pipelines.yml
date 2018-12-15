@@ -1,19 +1,90 @@
-# ASP.NET Core
-# Build and test ASP.NET Core projects targeting .NET Core.
-# Add steps that run tests, create a NuGet package, deploy, and more:
-# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
-
-pool:
-  vmImage: 'Ubuntu 16.04'
-
-variables:
-  buildConfiguration: 'Release'
-
+resources:
+- repo: self
+queue:
+  name: Hosted Ubuntu 1604
 steps:
-- script: dotnet build --configuration $(buildConfiguration)
-  displayName: 'dotnet build $(buildConfiguration)'
-- script: |
-    set -e
-    /usr/bin/Xvfb :10 -ac >> /tmp/Xvfb.out 2>&1 &
-    disown -ar
-  displayName: 'Start xvfb'
+- bash: |
+   # Write your commands here
+   
+   # Use the environment variables input below to pass secret variables to this script
+   
+   ls -al /usr/share/miniconda/bin/python
+   echo ------------
+   ls -al /usr/share/miniconda/bin
+  displayName: 'Bash Script'
+
+- task: UsePythonVersion@0
+  displayName: 'Use Python 3.7'
+  inputs:
+    versionSpec: 3.7
+
+
+- bash: |
+   echo "#Adds the virtual environment's executable path to json file
+   
+   import json,sys
+   import os.path
+   key = sys.argv[1]
+   
+   if os.path.isfile('./envPaths.json'):
+       with open('envPaths.json', 'r') as read_file:
+           data = json.load(read_file)
+   else:
+       with open('envPaths.json', 'w+') as read_file:
+           data = {}
+   with open('envPaths.json', 'w') as outfile:
+       data[key] = sys.executable
+       json.dump(data, outfile, sort_keys=True, indent=4)" > addEnvPath.py
+  displayName: 'Create Environment paths adder'
+
+- powershell: |
+   Write-Host $Env:CONDA
+   
+   $platform = 'Linux'
+   
+   
+   if( $platform -eq 'Linux' ){
+              $condaPythonPath = Join-Path -Path $Env:CONDA -ChildPath bin | Join-Path -ChildPath python
+          }else {
+              $condaPythonPath = Join-Path -Path $Env:CONDA -ChildPath python
+          }
+   
+   
+   & $condaPythonPath addEnvPath.py condaPathz
+   
+   Get-Content envPaths.json
+  displayName: 'Save conda environment executable'
+
+- task: PipAuthenticate@0
+  displayName: 'Pip Authenticate '
+  inputs:
+    artifactFeeds: 'virtualenv,pipenv'
+
+
+- bash: |
+   python -m venv .venv
+   
+   .venv/Scripts/python.exe addEnvPath.py venv
+   
+   cat envPaths.json
+  displayName: 'Create venv environment'
+
+- bash: |
+   python -m pip install pipenv
+   
+   pipenv run python addEnvPath.py pipenv
+   
+   cat envPaths.json
+  displayName: 'Create pipenv environment'
+
+- bash: |
+   python -m pip install virtualenv
+   
+   python -m virtualenv .virtualenv
+   
+   .virtualenv/Scripts/python addEnvPath.py virtualenv
+   
+   cat envPaths.json
+  displayName: 'Create virtualenv environment'
+
+
