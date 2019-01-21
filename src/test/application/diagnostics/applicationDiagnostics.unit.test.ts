@@ -62,7 +62,7 @@ suite('Application Diagnostics - ApplicationDiagnostics', () => {
         sourceMapService.verifyAll();
     });
 
-    test('Performing Pre Startup Health Check must check Path environment variable and Debugger Type along with Mac Interpreter', async () => {
+    test('Performing Pre Startup Health Check must diagnose all validation checks', async () => {
         envHealthCheck.setup(e => e.diagnose(typemoq.It.isAny()))
             .returns(() => Promise.resolve([]))
             .verifiable(typemoq.Times.exactly(2));
@@ -84,9 +84,66 @@ suite('Application Diagnostics - ApplicationDiagnostics', () => {
         envHealthCheck.verifyAll();
         debuggerTypeCheck.verifyAll();
         macInterpreterCheck.verifyAll();
+        lsNotSupportedCheck.verifyAll();
+        pythonInterpreterCheck.verifyAll();
     });
 
-    test('Diagnostics Returned by Per Startup Health Checks must be logged', async () => {
+    test('Performing Pre Startup Health Check must handles all validation checks only once either in background or foreground', async () => {
+        const diagnosticRunInBackground: IDiagnostic = {
+            code: 'Error' as any,
+            message: 'Error',
+            scope: undefined,
+            severity: undefined,
+            resource: undefined,
+            runInBackground: true
+        };
+        const diagnosticDoNotRunInBackground: IDiagnostic = {
+            code: 'Error' as any,
+            message: 'Error',
+            scope: undefined,
+            severity: undefined,
+            resource: undefined,
+            runInBackground: false
+        };
+        envHealthCheck.setup(e => e.diagnose(typemoq.It.isAny()))
+            .returns(() => Promise.resolve([diagnosticRunInBackground]))
+            .verifiable(typemoq.Times.exactly(2));
+        envHealthCheck.setup(p => p.handle(typemoq.It.isValue([diagnosticRunInBackground])))
+            .returns(() => Promise.resolve())
+            .verifiable(typemoq.Times.once());
+        debuggerTypeCheck.setup(e => e.diagnose(typemoq.It.isAny()))
+            .returns(() => Promise.resolve([diagnosticRunInBackground]))
+            .verifiable(typemoq.Times.exactly(2));
+        debuggerTypeCheck.setup(p => p.handle(typemoq.It.isValue([diagnosticRunInBackground])))
+            .returns(() => Promise.resolve())
+            .verifiable(typemoq.Times.once());
+        macInterpreterCheck.setup(p => p.diagnose(typemoq.It.isAny()))
+            .returns(() => Promise.resolve([diagnosticRunInBackground]))
+            .verifiable(typemoq.Times.exactly(2));
+        macInterpreterCheck.setup(p => p.handle(typemoq.It.isValue([diagnosticRunInBackground])))
+            .returns(() => Promise.resolve())
+            .verifiable(typemoq.Times.once());
+        lsNotSupportedCheck.setup(p => p.diagnose(typemoq.It.isAny()))
+            .returns(() => Promise.resolve([diagnosticDoNotRunInBackground]))
+            .verifiable(typemoq.Times.exactly(2));
+        lsNotSupportedCheck.setup(p => p.handle(typemoq.It.isValue([diagnosticDoNotRunInBackground])))
+            .returns(() => Promise.resolve())
+            .verifiable(typemoq.Times.once());
+        pythonInterpreterCheck.setup(p => p.diagnose(typemoq.It.isAny()))
+            .returns(() => Promise.resolve([diagnosticDoNotRunInBackground]))
+            .verifiable(typemoq.Times.exactly(2));
+        pythonInterpreterCheck.setup(p => p.handle(typemoq.It.isValue([diagnosticDoNotRunInBackground])))
+            .returns(() => Promise.resolve())
+            .verifiable(typemoq.Times.once());
+
+        await appDiagnostics.performPreStartupHealthCheck(undefined);
+
+        envHealthCheck.verifyAll();
+        debuggerTypeCheck.verifyAll();
+        macInterpreterCheck.verifyAll();
+    });
+
+    test('Diagnostics Returned by Pre Startup Health Checks must be logged', async () => {
         const diagnostics: IDiagnostic[] = [];
         for (let i = 0; i <= (Math.random() * 10); i += 1) {
             const diagnostic: IDiagnostic = {
@@ -167,6 +224,9 @@ suite('Application Diagnostics - ApplicationDiagnostics', () => {
 
         envHealthCheck.verifyAll();
         debuggerTypeCheck.verifyAll();
+        macInterpreterCheck.verifyAll();
+        lsNotSupportedCheck.verifyAll();
+        pythonInterpreterCheck.verifyAll();
         outputChannel.verifyAll();
         logger.verifyAll();
     });
