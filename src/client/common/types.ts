@@ -68,7 +68,8 @@ export type ExecutionInfo = {
 export enum LogLevel {
     Information = 'Information',
     Error = 'Error',
-    Warning = 'Warning'
+    Warning = 'Warning',
+    Verbose = 'Verbose'
 }
 
 export enum InstallerResponse {

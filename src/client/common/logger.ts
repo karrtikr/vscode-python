@@ -11,22 +11,41 @@ import { StopWatch } from './utils/stopWatch';
 // tslint:disable-next-line: no-var-requires no-require-imports
 const TransportStream = require('winston-transport');
 
-// Initialize the loggers as soon as this module is imported.
-const consoleLogger = createLogger();
-const fileLogger = createLogger();
-initializeConsoleLogger();
-initializeFileLogger();
-
 const logLevelMap = {
     [LogLevel.Error]: 'error',
     [LogLevel.Information]: 'info',
+    [LogLevel.Verbose]: 'verbose',
     [LogLevel.Warning]: 'warn'
 };
+
+const logLevelPriorities = {
+    error: 0,
+    warn: 1,
+    info: 2,
+    verbose: 3
+};
+
+// Initialize the loggers as soon as this module is imported.
+const consoleLogger = createLogger({
+    levels: logLevelPriorities,
+    level: logLevelMap[LogLevel.Verbose]
+});
+
+const fileLogger = createLogger({
+    levels: logLevelPriorities,
+    level: logLevelMap[LogLevel.Verbose]
+});
+
+initializeConsoleLogger();
+initializeFileLogger();
 
 function log(logLevel: LogLevel, ...args: any[]) {
     if (consoleLogger.transports.length > 0) {
         const message = args.length === 0 ? '' : util.format(args[0], ...args.slice(1));
         consoleLogger.log(logLevelMap[logLevel], message);
+        if (logLevel === 'Verbose') {
+            console.debug(message);
+        }
     }
     logToFile(logLevel, ...args);
 }
@@ -236,7 +255,7 @@ function returnValueToLogString(returnValue: any): string {
 }
 
 export function traceVerbose(...args: any[]) {
-    log(LogLevel.Information, ...args);
+    log(LogLevel.Verbose, ...args);
 }
 
 export function traceError(...args: any[]) {
@@ -253,13 +272,13 @@ export function traceWarning(...args: any[]) {
 
 export namespace traceDecorators {
     export function verbose(message: string, options: LogOptions = LogOptions.Arguments | LogOptions.ReturnValue) {
-        return trace(message, options);
+        return trace(message, options, LogLevel.Verbose);
     }
     export function error(message: string) {
         return trace(message, LogOptions.Arguments | LogOptions.ReturnValue, LogLevel.Error);
     }
     export function info(message: string) {
-        return trace(message);
+        return trace(message, undefined, LogLevel.Information);
     }
     export function warn(message: string) {
         return trace(message, LogOptions.Arguments | LogOptions.ReturnValue, LogLevel.Warning);
@@ -295,6 +314,8 @@ function trace(message: string, options: LogOptions = LogOptions.None, logLevel?
                 if (ex) {
                     log(LogLevel.Error, messagesToLog.join(', '), ex);
                     sendTelemetryEvent('ERROR' as any, undefined, undefined, ex);
+                } else if (logLevel === LogLevel.Verbose) {
+                    log(LogLevel.Verbose, messagesToLog.join(', '));
                 } else {
                     log(LogLevel.Information, messagesToLog.join(', '));
                 }
