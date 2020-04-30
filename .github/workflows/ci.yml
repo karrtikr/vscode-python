@@ -352,6 +352,13 @@ jobs:
         shell: bash
         if: matrix.test-suite != 'ts-unit'
 
+      - name: Set CI_PYTHON_PATH and disable autoselection
+        run: |
+          echo "::set-env name=CI_PYTHON_PATH::python"
+          echo "::set-env name=CI_DISABLE_AUTO_SELECTION::1"
+        shell: bash
+        if: matrix.test-suite != 'ts-unit'
+
       # Run TypeScript unit tests only for Python 3.X.
       - name: Run TypeScript unit tests
         run: npm run test:unittests:cover
