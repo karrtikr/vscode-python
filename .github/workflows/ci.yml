@@ -195,6 +195,7 @@ jobs:
     # if: github.repository == 'microsoft/vscode-python'
     needs: [python-deps, js-ts-deps]
     strategy:
+      fail-fast: false
       matrix:
         # We're not running CI on macOS for now because it's one less matrix entry to lower the number of runners used,
         # macOS runners are expensive, and we assume that Ubuntu is enough to cover the UNIX case.
@@ -422,6 +423,7 @@ jobs:
     needs: [build-vsix]
     # if: github.repository == 'microsoft/vscode-python'
     strategy:
+      fail-fast: false
       matrix:
         # We're not running CI on macOS for now because it's one less matrix entry to lower the number of runners used,
         # macOS runners are expensive, and we assume that Ubuntu is enough to cover the UNIX case.
