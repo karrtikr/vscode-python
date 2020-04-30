@@ -352,7 +352,7 @@ jobs:
         shell: bash
         if: matrix.test-suite != 'ts-unit'
 
-      - name: Set CI_PYTHON_PATH and disable autoselection
+      - name: Set CI_PYTHON_PATH and CI_DISABLE_AUTO_SELECTION
         run: |
           echo "::set-env name=CI_PYTHON_PATH::python"
           echo "::set-env name=CI_DISABLE_AUTO_SELECTION::1"
