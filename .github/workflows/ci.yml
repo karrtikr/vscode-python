@@ -7,7 +7,7 @@ on:
       - task*
 
 env:
-  PYTHON_VERSION: 3.8
+  PYTHON_VERSION: 3.7
   CACHE_NPM_DEPS: cache-npm
   CACHE_OUT_DIRECTORY: cache-out-directory
   CACHE_PIP_DEPS: cache-pip
@@ -201,7 +201,7 @@ jobs:
         # macOS runners are expensive, and we assume that Ubuntu is enough to cover the UNIX case.
         os: [windows-latest]
         # Run the tests on the oldest and most recent versions of Python.
-        python: [2.7, 3.8]
+        python: [2.7, 3.7]
         test-suite: [multi-workspace]
     env:
       # Something in Node 12.16.0 breaks the TS debug adapter, and ubuntu-latest bundles Node 12.16.1.
@@ -428,7 +428,7 @@ jobs:
         # We're not running CI on macOS for now because it's one less matrix entry to lower the number of runners used,
         # macOS runners are expensive, and we assume that Ubuntu is enough to cover the UNIX case.
         os: [ubuntu-latest, windows-latest]
-        python: [3.8]
+        python: [3.7]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
