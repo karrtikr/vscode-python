@@ -8,6 +8,8 @@ on:
 
 env:
   PYTHON_VERSION: 3.7
+  MOCHA_REPORTER_JUNIT: true # Use the mocha-multi-reporters and send output to both console (spec) and JUnit (mocha-junit-reporter).
+  VSC_PYTHON_FORCE_LOGGING: true # Enable this to turn on console output for the logger
   CACHE_NPM_DEPS: cache-npm
   CACHE_OUT_DIRECTORY: cache-out-directory
   CACHE_PIP_DEPS: cache-pip
