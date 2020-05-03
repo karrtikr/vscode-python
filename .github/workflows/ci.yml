@@ -7,7 +7,7 @@ on:
       - task*
 
 env:
-  PYTHON_VERSION: 3.7
+  PYTHON_VERSION: 3.8
   MOCHA_REPORTER_JUNIT: true # Use the mocha-multi-reporters and send output to both console (spec) and JUnit (mocha-junit-reporter).
   VSC_PYTHON_FORCE_LOGGING: true # Enable this to turn on console output for the logger
   CACHE_NPM_DEPS: cache-npm
@@ -203,7 +203,7 @@ jobs:
         # macOS runners are expensive, and we assume that Ubuntu is enough to cover the UNIX case.
         os: [windows-latest]
         # Run the tests on the oldest and most recent versions of Python.
-        python: [2.7, 3.7]
+        python: [2.7, 3.8]
         test-suite: [multi-workspace]
     env:
       # Something in Node 12.16.0 breaks the TS debug adapter, and ubuntu-latest bundles Node 12.16.1.
@@ -430,7 +430,7 @@ jobs:
         # We're not running CI on macOS for now because it's one less matrix entry to lower the number of runners used,
         # macOS runners are expensive, and we assume that Ubuntu is enough to cover the UNIX case.
         os: [ubuntu-latest, windows-latest]
-        python: [3.7]
+        python: [3.8]
     steps:
       - name: Checkout
         uses: actions/checkout@v2
