@@ -128,7 +128,9 @@ function activatePythonExtensionScript() {
  * @returns {Promise<void>}
  */
 export async function run(): Promise<void> {
+    console.log('About to configure');
     const options = configure();
+    console.log('Done configuring');
     const mocha = new Mocha(options);
     const testsRoot = path.join(__dirname);
 
@@ -167,9 +169,12 @@ export async function run(): Promise<void> {
         console.error('Failed to activate python extension without errors', ex);
     }
 
+    console.log('Test run starting...');
     // Run the tests.
     await new Promise<void>((resolve, reject) => {
+        console.log('Test run starting');
         mocha.run((failures) => {
+            console.log('Test run finished');
             if (failures > 0) {
                 return reject(new Error(`${failures} total failures`));
             }

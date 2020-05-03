@@ -83,6 +83,7 @@ async function startSocketServer() {
             });
             socket.on('error', (ex) => {
                 // Just log it, no need to do anything else.
+                console.error('Is this called Error');
                 console.error(ex);
             });
             socket.on('end', () => {
@@ -114,6 +115,7 @@ async function startSocketServer() {
         });
         server.on('error', (ex) => {
             // Just log it, no need to do anything else.
+            console.error('Is this called Error');
             console.error(ex);
         });
         server.on('end', () => {
