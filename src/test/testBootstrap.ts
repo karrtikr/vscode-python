@@ -85,6 +85,24 @@ async function startSocketServer() {
                 // Just log it, no need to do anything else.
                 console.error(ex);
             });
+            socket.on('end', () => {
+                console.log('Is this called ENd');
+            });
+            socket.on('close', () => {
+                console.log('Is this called close');
+            });
+            socket.on('drain', () => {
+                console.log('Is this called drain');
+            });
+            socket.on('timeout', () => {
+                console.log('Is this called timeout');
+            });
+            socket.on('lookup', () => {
+                console.log('Is this called lookup');
+            });
+            socket.on('connect', () => {
+                console.log('Is this called connect');
+            });
         });
 
         server.listen({ host: '127.0.0.1', port: 0 }, async () => {
@@ -97,6 +115,18 @@ async function startSocketServer() {
         server.on('error', (ex) => {
             // Just log it, no need to do anything else.
             console.error(ex);
+        });
+        server.on('end', () => {
+            console.log('Is this called ENd');
+        });
+        server.on('close', () => {
+            console.log('Is this called close');
+        });
+        server.on('connection', () => {
+            console.log('Is this called connection');
+        });
+        server.on('listening', () => {
+            console.log('Is this called listening');
         });
     });
 }
