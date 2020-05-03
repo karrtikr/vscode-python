@@ -128,6 +128,7 @@ function activatePythonExtensionScript() {
  * @returns {Promise<void>}
  */
 export async function run(): Promise<void> {
+    // tslint:disable: no-console
     console.log('About to configure');
     const options = configure();
     console.log('Done configuring');
