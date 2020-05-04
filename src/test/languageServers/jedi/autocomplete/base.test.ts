@@ -26,14 +26,14 @@ const fileSuppress = path.join(autoCompPath, 'suppress.py');
 suite('Autocomplete Base Tests', function () {
     // Attempt to fix #1301
     // tslint:disable-next-line:no-invalid-this
-    this.timeout(60000);
+    this.timeout(400000);
     let ioc: UnitTestIocContainer;
     let isPy38: boolean;
 
     suiteSetup(async function () {
         // Attempt to fix #1301
         // tslint:disable-next-line:no-invalid-this
-        this.timeout(60000);
+        this.timeout(400000);
         await initialize();
         initializeDI();
         isPy38 = await isPythonVersion('3.8');
