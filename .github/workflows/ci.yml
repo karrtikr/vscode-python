@@ -239,6 +239,10 @@ jobs:
         run: npx gulp prePublishNonBundle
         if: steps.out-cache.outputs.cache-hit == false
 
+      - name: Compile if not cached
+        run: unset PYTHONPATH
+        shell: bash
+
       - name: Use Python ${{matrix.python}}
         uses: actions/setup-python@v1
         with:
