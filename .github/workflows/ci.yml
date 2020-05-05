@@ -252,13 +252,13 @@ jobs:
       - name: curl PyPI to get debugpy versions
         run: curl --output debugpy.json https://pypi.org/pypi/debugpy/json
 
-      - name: Retrieve cached pythonFiles/ directory
-        uses: actions/cache@v1
-        # Use an id for this step so that its cache-hit output can be accessed and checked in the next step.
-        id: pythonFiles-cache
-        with:
-          path: ./pythonFiles/lib/python
-          key: ${{runner.os}}-${{env.CACHE_PYTHONFILES}}-pythonFiles-${{env.PYTHON_VERSION}}-${{hashFiles('requirements.txt')}}-${{hashFiles('build/debugger-install-requirements.txt')}}-${{hashFiles('debugpy.json')}}
+      #   - name: Retrieve cached pythonFiles/ directory
+      #     uses: actions/cache@v1
+      #     # Use an id for this step so that its cache-hit output can be accessed and checked in the next step.
+      #     id: pythonFiles-cache
+      #     with:
+      #       path: ./pythonFiles/lib/python
+      #       key: ${{runner.os}}-${{env.CACHE_PYTHONFILES}}-pythonFiles-${{env.PYTHON_VERSION}}-${{hashFiles('requirements.txt')}}-${{hashFiles('build/debugger-install-requirements.txt')}}-${{hashFiles('debugpy.json')}}
 
       - name: Install Python requirements if not cached
         run: |
