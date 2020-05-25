@@ -7,6 +7,7 @@
 
 import { anything, instance, mock, verify, when } from 'ts-mockito';
 import * as TypeMoq from 'typemoq';
+import { Extension } from 'vscode';
 import { ApplicationShell } from '../../../client/common/application/applicationShell';
 import { CommandManager } from '../../../client/common/application/commandManager';
 import { IApplicationShell, ICommandManager } from '../../../client/common/application/types';
@@ -17,8 +18,9 @@ import {
 } from '../../../client/common/insidersBuild/insidersExtensionPrompt';
 import { ExtensionChannel, IExtensionChannelService } from '../../../client/common/insidersBuild/types';
 import { PersistentStateFactory } from '../../../client/common/persistentState';
-import { IPersistentState, IPersistentStateFactory } from '../../../client/common/types';
+import { IExtensions, IPersistentState, IPersistentStateFactory } from '../../../client/common/types';
 import { Common, DataScienceSurveyBanner, ExtensionChannels } from '../../../client/common/utils/localize';
+import { PVSC_EXTENSION_ID_FOR_TESTS } from '../../constants';
 
 // tslint:disable-next-line: max-func-body-length
 suite('Insiders Extension prompt', () => {
@@ -27,13 +29,19 @@ suite('Insiders Extension prompt', () => {
     let cmdManager: ICommandManager;
     let persistentState: IPersistentStateFactory;
     let hasUserBeenNotifiedState: TypeMoq.IMock<IPersistentState<boolean>>;
+    let extensions: TypeMoq.IMock<IExtensions>;
     let insidersPrompt: InsidersExtensionPrompt;
+    let extension: TypeMoq.IMock<Extension<any>>;
     setup(() => {
         extensionChannelService = mock(ExtensionChannelService);
         appShell = mock(ApplicationShell);
         persistentState = mock(PersistentStateFactory);
         cmdManager = mock(CommandManager);
         hasUserBeenNotifiedState = TypeMoq.Mock.ofType<IPersistentState<boolean>>();
+        extensions = TypeMoq.Mock.ofType<IExtensions>();
+        extension = TypeMoq.Mock.ofType<Extension<any>>();
+        extensions.setup((e) => e.getExtension(PVSC_EXTENSION_ID_FOR_TESTS)).returns(() => extension.object);
+        extension.setup((e) => e.packageJSON).returns(() => ({ featureFlags: { oneVSIX: true } }));
         when(persistentState.createGlobalPersistentState(insidersPromptStateKey, false)).thenReturn(
             hasUserBeenNotifiedState.object
         );
@@ -41,8 +49,21 @@ suite('Insiders Extension prompt', () => {
             instance(appShell),
             instance(extensionChannelService),
             instance(cmdManager),
-            instance(persistentState)
+            instance(persistentState),
+            extensions.object
         );
+    });
+
+    test('If oneVSIX flag is not set, do not show prompt to install insiders', async () => {
+        const prompts = [
+            ExtensionChannels.yesWeekly(),
+            ExtensionChannels.yesDaily(),
+            DataScienceSurveyBanner.bannerLabelNo()
+        ];
+        extension.reset();
+        extension.setup((e) => e.packageJSON).returns(() => ({ featureFlags: {} }));
+        await insidersPrompt.promptToInstallInsiders();
+        verify(appShell.showInformationMessage(ExtensionChannels.promptMessage(), ...prompts)).never();
     });
 
     test("Channel is set to 'daily' if 'Yes, daily' option is selected", async () => {

@@ -7,8 +7,9 @@ import { inject, injectable } from 'inversify';
 import { sendTelemetryEvent } from '../../telemetry';
 import { EventName } from '../../telemetry/constants';
 import { IApplicationShell, ICommandManager } from '../application/types';
+import { PVSC_EXTENSION_ID } from '../constants';
 import { traceDecorators } from '../logger';
-import { IPersistentState, IPersistentStateFactory } from '../types';
+import { IExtensions, IPersistentState, IPersistentStateFactory } from '../types';
 import { Common, DataScienceSurveyBanner, ExtensionChannels } from '../utils/localize';
 import { noop } from '../utils/misc';
 import { IExtensionChannelService, IInsiderExtensionPrompt } from './types';
@@ -22,7 +23,8 @@ export class InsidersExtensionPrompt implements IInsiderExtensionPrompt {
         @inject(IApplicationShell) private readonly appShell: IApplicationShell,
         @inject(IExtensionChannelService) private readonly insidersDownloadChannelService: IExtensionChannelService,
         @inject(ICommandManager) private readonly cmdManager: ICommandManager,
-        @inject(IPersistentStateFactory) private readonly persistentStateFactory: IPersistentStateFactory
+        @inject(IPersistentStateFactory) private readonly persistentStateFactory: IPersistentStateFactory,
+        @inject(IExtensions) private readonly extensions: IExtensions
     ) {
         this.hasUserBeenNotified = this.persistentStateFactory.createGlobalPersistentState(
             insidersPromptStateKey,
@@ -32,6 +34,12 @@ export class InsidersExtensionPrompt implements IInsiderExtensionPrompt {
 
     @traceDecorators.error('Error in prompting to install insiders')
     public async promptToInstallInsiders(): Promise<void> {
+        const extension = this.extensions.getExtension(PVSC_EXTENSION_ID);
+        const flagValue: boolean | undefined = extension?.packageJSON?.featureFlags?.oneVSIX;
+        if (!flagValue) {
+            // Using the OSS build of the extension, do not prompt to join the insiders program.
+            return;
+        }
         const prompts = [
             ExtensionChannels.yesWeekly(),
             ExtensionChannels.yesDaily(),
