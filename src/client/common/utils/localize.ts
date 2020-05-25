@@ -68,6 +68,11 @@ export namespace Diagnostics {
         'Your settings needs to be updated to change the setting "python.unitTest." to "python.testing.", otherwise testing Python code using the extension may not work. Would you like to automatically update your settings now?'
     );
     export const updateSettings = localize('diagnostics.updateSettings', 'Yes, update settings');
+    export const viewLicense = localize('diagnostics.viewLicense', 'View license');
+    export const eulaNotification = localize(
+        'diagnostics.eulaNotification',
+        'The Python Extension has been automatically updated. A new license applies to this extension. [Learn more](<to be filled>).'
+    );
     export const processId = localize(
         'diagnostics.processId',
         'Attaching the debugger to a local process is an experimental feature. It will be available to all users soon.'
@@ -92,6 +97,7 @@ export namespace Common {
     export const moreInfo = localize('Common.moreInfo', 'More Info');
     export const learnMore = localize('Common.learnMore', 'Learn more');
     export const and = localize('Common.and', 'and');
+    export const close = localize('Common.close', 'Close');
     export const reportThisIssue = localize('Common.reportThisIssue', 'Report this issue');
 }
 

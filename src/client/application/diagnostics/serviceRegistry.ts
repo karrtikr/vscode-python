@@ -11,6 +11,7 @@ import {
     EnvironmentPathVariableDiagnosticsService,
     EnvironmentPathVariableDiagnosticsServiceId
 } from './checks/envPathVariable';
+import { EulaDiagnosticService, EulaDiagnosticServiceId } from './checks/eulaNotification';
 import {
     InvalidLaunchJsonDebuggerService,
     InvalidLaunchJsonDebuggerServiceId
@@ -91,6 +92,11 @@ export function registerTypes(serviceManager: IServiceManager, languageServerTyp
         IDiagnosticsService,
         UpgradeCodeRunnerDiagnosticService,
         UpgradeCodeRunnerDiagnosticServiceId
+    );
+    serviceManager.addSingleton<IDiagnosticsService>(
+        IDiagnosticsService,
+        EulaDiagnosticService,
+        EulaDiagnosticServiceId
     );
     serviceManager.addSingleton<IDiagnosticsCommandFactory>(IDiagnosticsCommandFactory, DiagnosticsCommandFactory);
     serviceManager.addSingleton<IApplicationDiagnostics>(IApplicationDiagnostics, ApplicationDiagnostics);

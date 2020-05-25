@@ -11,6 +11,10 @@ import {
     EnvironmentPathVariableDiagnosticsServiceId
 } from '../../../client/application/diagnostics/checks/envPathVariable';
 import {
+    EulaDiagnosticService,
+    EulaDiagnosticServiceId
+} from '../../../client/application/diagnostics/checks/eulaNotification';
+import {
     InvalidLaunchJsonDebuggerService,
     InvalidLaunchJsonDebuggerServiceId
 } from '../../../client/application/diagnostics/checks/invalidLaunchJsonDebugger';
@@ -97,6 +101,13 @@ suite('Application Diagnostics - Register classes in IOC Container', () => {
                 IDiagnosticsService,
                 UpgradeCodeRunnerDiagnosticService,
                 UpgradeCodeRunnerDiagnosticServiceId
+            )
+        );
+        verify(
+            serviceManager.addSingleton<IDiagnosticsService>(
+                IDiagnosticsService,
+                EulaDiagnosticService,
+                EulaDiagnosticServiceId
             )
         );
         verify(
