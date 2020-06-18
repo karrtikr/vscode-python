@@ -118,8 +118,8 @@ jobs:
   runInsideContainer:
     name: Run inside container
     runs-on: ubuntu-latest
-    # container: docker://pvsccicontainers.azurecr.io/python3
-    container: continuumio/miniconda:4.6.14
+    container: docker://pvsccicontainers.azurecr.io/alltools
+    # container: continuumio/miniconda:4.6.14
     # if: github.repository == 'microsoft/vscode-python'
     steps:
       - name: Show all env vars
