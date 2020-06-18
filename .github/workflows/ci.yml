@@ -153,16 +153,6 @@ jobs:
           printenv
         shell: bash
 
-      - name: Use Python 3.7
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.7
-
-      - name: Show all env vars
-        run: |
-          printenv
-        shell: bash
-
       - name: See if python is on PATH
         run: |
           python -c"import sys;print(sys.executable)"
@@ -194,6 +184,10 @@ jobs:
       - name: Pyenv version
         run: |
           pyenv --version
+      - name: Pyenv install specific python version
+        run: |
+          pyenv install 3.5.0
+          pyenv versions
       - name: Bash
         shell: bash -l {0}
         run: |
