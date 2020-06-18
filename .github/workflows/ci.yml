@@ -186,6 +186,14 @@ jobs:
       - name: Pipenv version
         run: |
           pipenv --version
+      - name: Install python version
+        uses: gabrielfalcao/pyenv-action@v5
+        with:
+            default: "3.8"
+            command: pip install -U pip  # upgrade pip after installing python
+      - name: Pyenv version
+        run: |
+          pyenv --version
       - name: Bash
         shell: bash -l {0}
         run: |
