@@ -156,29 +156,6 @@ jobs:
           python -c"import sys;print(sys.executable)"
           python --version
 
-  pyenv-linux:
-    name: Pyenv Linux
-    runs-on: 'ubuntu-latest'
-    steps:
-      - name: Show all env vars
-        run: |
-          printenv
-        shell: bash
-      - name: Install pyenv version
-        uses: gabrielfalcao/pyenv-action@v5
-        with:
-          default: '3.8'
-          command: pip install -U pip # upgrade pip after installing python
-      - name: Pyenv version
-        run: |
-          pyenv --version
-      - name: Pyenv install specific python version
-        run: |
-          pyenv install 3.5.0
-      - name: Pyenv versions
-        run: |
-          pyenv versions
-
   test_pyenv:
     runs-on: ubuntu-latest
     name: install pyenv
@@ -225,10 +202,11 @@ jobs:
       - name: Pyenv version
         run: |
           pyenv --version
-      - name: Pyenv install specific python version
+      - name: Create conda environments
         run: |
-          pyenv install 3.5.0
-          pyenv versions
+          conda create -n "test_env1" -y python
+          conda create -p "./test_env2" -y python
+          create -p "$HOME/test_env3" -y python
       - name: Bash
         shell: bash -l {0}
         run: |
