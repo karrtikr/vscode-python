@@ -207,6 +207,9 @@ jobs:
           conda create -n "test_env1" -y python
           conda create -p "./test_env2" -y python
           conda create -p "$HOME/test_env3" -y python
+      - name: Create pipenv environment
+        run: |
+          pipenv run python -c"import sys;print(sys.executable)"
       - name: Bash
         shell: bash -l {0}
         run: |
