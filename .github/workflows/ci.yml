@@ -194,11 +194,23 @@ jobs:
       - name: Pipenv version
         run: |
           pipenv --version
-      - name: Install python version
-        uses: gabrielfalcao/pyenv-action@v5
+      - name: setup pyenv
+        uses: 'gabrielfalcao/pyenv-action@v5'
         with:
-          default: '3.8'
+          default: 3.7.2
+          versions: 3.6.8, 3.5.7
           command: pip install -U pip # upgrade pip after installing python
+
+      # create virtualenv for each python version
+
+      - name: Create virtualenv for python 3.5.7
+        run: pyenv local 3.5.7 && python3 -mvenv .venv357
+
+      - name: Create virtualenv for python 3.6.8
+        run: pyenv local 3.6.8 && python3 -mvenv .venv365
+
+      - name: Create virtualenv for python 3.7.2
+        run: pyenv local 3.7.2 && python3 -mvenv .venv372
       - name: Pyenv version
         run: |
           pyenv --version
