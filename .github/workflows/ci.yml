@@ -113,72 +113,29 @@ jobs:
   #       docker pull pvsccontainers.azurecr.io/samples/2
   #       docker tag pvsccontainers.azurecr.io/samples/2 python3.8.3
 
-  runInsideContainer:
-    name: Run inside container
-    runs-on: ubuntu-latest
-    container: docker://pvsccicontainers.azurecr.io/alltools
-    # container: continuumio/miniconda:4.6.14
-    # if: github.repository == 'microsoft/vscode-python'
-    steps:
-      - name: Show all env vars
-        run: |
-          printenv
-        shell: bash
+  #   test_pyenv:
+  #     runs-on: ubuntu-latest
+  #     name: install pyenv
+  #     steps:
+  #       - name: setup pyenv
+  #         uses: 'gabrielfalcao/pyenv-action@v5'
+  #         with:
+  #           default: 3.7.2
+  #           versions: 3.6.8, 3.5.7
 
-      - name: Bash
-        shell: bash -l {0}
-        run: |
-          conda info
-          conda list
+  #       # create virtualenv for each python version
 
-      #   - name: See if python is on PATH
-      #     run: |
-      #       python --version
-      #       python -c"import sys;print(sys.executable)"
+  #       - name: Create virtualenv for python 3.5.7
+  #         run: pyenv local 3.5.7 && python3 -mvenv .venv357
 
-      #   - name: Use Python 2.7
-      #     uses: actions/setup-python@v2
-      #     with:
-      #       python-version: 2.7
+  #       - name: Create virtualenv for python 3.6.8
+  #         run: pyenv local 3.6.8 && python3 -mvenv .venv365
 
-      - name: See if python is on PATH
-        run: |
-          python -c"import sys;print(sys.executable)"
-          python --version
-
-      - name: Show all env vars
-        run: |
-          printenv
-        shell: bash
-
-      - name: See if python is on PATH
-        run: |
-          python -c"import sys;print(sys.executable)"
-          python --version
-
-  test_pyenv:
-    runs-on: ubuntu-latest
-    name: install pyenv
-    steps:
-      - name: setup pyenv
-        uses: 'gabrielfalcao/pyenv-action@v5'
-        with:
-          default: 3.7.2
-          versions: 3.6.8, 3.5.7
-
-      # create virtualenv for each python version
-
-      - name: Create virtualenv for python 3.5.7
-        run: pyenv local 3.5.7 && python3 -mvenv .venv357
-
-      - name: Create virtualenv for python 3.6.8
-        run: pyenv local 3.6.8 && python3 -mvenv .venv365
-
-      - name: Create virtualenv for python 3.7.2
-        run: pyenv local 3.7.2 && python3 -mvenv .venv372
+  #       - name: Create virtualenv for python 3.7.2
+  #         run: pyenv local 3.7.2 && python3 -mvenv .venv372
 
   example-2-linux:
-    name: Ex2 Linux
+    name: Installing tools and creating environments in the workflow
     runs-on: 'ubuntu-latest'
     steps:
       - name: Show all env vars
@@ -238,140 +195,183 @@ jobs:
           printenv
         shell: bash
 
-  example-2-mac:
-    name: Ex2 Mac
-    runs-on: 'macos-latest'
+  runInsideContainer:
+    name: Pull a container with everything installed already
+    runs-on: ubuntu-latest
+    container: docker://pvsccicontainers.azurecr.io/alltools
+    # container: continuumio/miniconda:4.6.14
+    # if: github.repository == 'microsoft/vscode-python'
     steps:
       - name: Show all env vars
         run: |
           printenv
         shell: bash
-      - uses: goanpeca/setup-miniconda@v1
-        with:
-          miniconda-version: 'latest'
-      - name: Sh
-        shell: sh -l {0}
-        run: |
-          conda info
-          conda list
+
       - name: Bash
         shell: bash -l {0}
         run: |
           conda info
           conda list
-      - name: PowerShell Core
-        shell: pwsh
-        run: |
-          conda info
-          conda list
 
-      - name: Show all env vars
-        run: |
-          printenv
-        shell: bash
-
-  example-2-win:
-    name: Ex2 Windows
-    runs-on: 'windows-latest'
-    steps:
-      - uses: goanpeca/setup-miniconda@v1
-        with:
-          miniconda-version: 'latest'
-      - name: Bash
-        shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-      - name: PowerShell
-        shell: powershell
-        run: |
-          conda info
-          conda list
-      - name: PowerShell Core
-        shell: pwsh
-        run: |
-          conda info
-          conda list
-      - name: Cmd.exe
-        shell: cmd /C CALL {0}
-        run: >-
-          conda info &&
-          conda list
-
-  example-3-linux:
-    name: Ex2 Linux 4.6.14
-    runs-on: 'ubuntu-latest'
-    steps:
-      - uses: goanpeca/setup-miniconda@v1
-        with:
-          miniconda-version: '4.6.14'
-      #   - name: Sh
-      #     shell: sh -l {0}
+      #   - name: See if python is on PATH
       #     run: |
-      #       conda info
-      #       conda list
-      - name: Bash
-        shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-      - name: PowerShell Core
-        shell: pwsh
-        run: |
-          conda info
-          conda list
+      #       python --version
+      #       python -c"import sys;print(sys.executable)"
 
-  example-3-mac:
-    name: Ex2 Mac 4.6.14
-    runs-on: 'macos-latest'
-    steps:
-      - uses: goanpeca/setup-miniconda@v1
-        with:
-          miniconda-version: '4.6.14'
-      - name: Sh
-        shell: sh -l {0}
-        run: |
-          conda info
-          conda list
-      - name: Bash
-        shell: bash -l {0}
-        run: |
-          conda info
-          conda list
-      - name: PowerShell Core
-        shell: pwsh
-        run: |
-          conda info
-          conda list
+      #   - name: Use Python 2.7
+      #     uses: actions/setup-python@v2
+      #     with:
+      #       python-version: 2.7
 
-  example-3-win:
-    name: Ex2 Windows 4.6.14
-    runs-on: 'windows-latest'
-    steps:
-      - uses: goanpeca/setup-miniconda@v1
-        with:
-          miniconda-version: '4.6.14'
-      - name: Bash
-        shell: bash -l {0}
+      - name: See if python is on PATH
         run: |
-          conda info
-          conda list
-      - name: PowerShell
-        shell: powershell
+          python -c"import sys;print(sys.executable)"
+          python --version
+
+      - name: Show all env vars
         run: |
-          conda info
-          conda list
-      - name: PowerShell Core
-        shell: pwsh
+          printenv
+        shell: bash
+
+      - name: See if python is on PATH
         run: |
-          conda info
-          conda list
-      - name: Cmd.exe
-        shell: cmd /C CALL {0}
-        run: >-
-          conda info &&
-          conda list
-  ### Hygiene + VSIX upload
+          python -c"import sys;print(sys.executable)"
+          python --version
+
+#   example-2-mac:
+#     name: Ex2 Mac
+#     runs-on: 'macos-latest'
+#     steps:
+#       - name: Show all env vars
+#         run: |
+#           printenv
+#         shell: bash
+#       - uses: goanpeca/setup-miniconda@v1
+#         with:
+#           miniconda-version: 'latest'
+#       - name: Sh
+#         shell: sh -l {0}
+#         run: |
+#           conda info
+#           conda list
+#       - name: Bash
+#         shell: bash -l {0}
+#         run: |
+#           conda info
+#           conda list
+#       - name: PowerShell Core
+#         shell: pwsh
+#         run: |
+#           conda info
+#           conda list
+
+#       - name: Show all env vars
+#         run: |
+#           printenv
+#         shell: bash
+
+#   example-2-win:
+#     name: Ex2 Windows
+#     runs-on: 'windows-latest'
+#     steps:
+#       - uses: goanpeca/setup-miniconda@v1
+#         with:
+#           miniconda-version: 'latest'
+#       - name: Bash
+#         shell: bash -l {0}
+#         run: |
+#           conda info
+#           conda list
+#       - name: PowerShell
+#         shell: powershell
+#         run: |
+#           conda info
+#           conda list
+#       - name: PowerShell Core
+#         shell: pwsh
+#         run: |
+#           conda info
+#           conda list
+#       - name: Cmd.exe
+#         shell: cmd /C CALL {0}
+#         run: >-
+#           conda info &&
+#           conda list
+
+#   example-3-linux:
+#     name: Ex2 Linux 4.6.14
+#     runs-on: 'ubuntu-latest'
+#     steps:
+#       - uses: goanpeca/setup-miniconda@v1
+#         with:
+#           miniconda-version: '4.6.14'
+#       #   - name: Sh
+#       #     shell: sh -l {0}
+#       #     run: |
+#       #       conda info
+#       #       conda list
+#       - name: Bash
+#         shell: bash -l {0}
+#         run: |
+#           conda info
+#           conda list
+#       - name: PowerShell Core
+#         shell: pwsh
+#         run: |
+#           conda info
+#           conda list
+
+#   example-3-mac:
+#     name: Ex2 Mac 4.6.14
+#     runs-on: 'macos-latest'
+#     steps:
+#       - uses: goanpeca/setup-miniconda@v1
+#         with:
+#           miniconda-version: '4.6.14'
+#       - name: Sh
+#         shell: sh -l {0}
+#         run: |
+#           conda info
+#           conda list
+#       - name: Bash
+#         shell: bash -l {0}
+#         run: |
+#           conda info
+#           conda list
+#       - name: PowerShell Core
+#         shell: pwsh
+#         run: |
+#           conda info
+#           conda list
+
+#   example-3-win:
+#     name: Ex2 Windows 4.6.14
+#     runs-on: 'windows-latest'
+#     steps:
+#       - uses: goanpeca/setup-miniconda@v1
+#         with:
+#           miniconda-version: '4.6.14'
+#       - name: Bash
+#         shell: bash -l {0}
+#         run: |
+#           conda info
+#           conda list
+#       - name: PowerShell
+#         shell: powershell
+#         run: |
+#           conda info
+#           conda list
+#       - name: PowerShell Core
+#         shell: pwsh
+#         run: |
+#           conda info
+#           conda list
+#       - name: Cmd.exe
+#         shell: cmd /C CALL {0}
+#         run: >-
+#           conda info &&
+#           conda list
+#   ### Hygiene + VSIX upload
 
 #   compile-hygiene:
 #     name: Compile, lint, check for errors
