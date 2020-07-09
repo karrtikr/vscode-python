@@ -5,6 +5,9 @@ on:
     branches:
       # Run the CI workflow only on master for microsoft/vscode-python for now.
       - master
+  pull_request:
+    branches:
+      - master
 
 env:
   PYTHON_VERSION: 3.8
