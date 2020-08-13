@@ -2,7 +2,7 @@ import { SemVer } from 'semver';
 import { CodeLensProvider, Disposable, Event, TextDocument, Uri } from 'vscode';
 import { Resource } from '../common/types';
 import { CondaEnvironmentInfo, CondaInfo } from '../pythonEnvironments/discovery/locators/services/conda';
-import { GetInterpreterLocatorOptions } from '../pythonEnvironments/discovery/locators/types';
+import { GetInterpreterLocatorOptions, PartialPythonEnvironment } from '../pythonEnvironments/discovery/locators/types';
 import { InterpreterType, PythonInterpreter } from '../pythonEnvironments/info';
 import { WorkspacePythonPath } from './helpers';
 import { GetInterpreterOptions } from './interpreterService';
@@ -96,7 +96,7 @@ export interface IPipEnvService extends IInterpreterLocatorService {
 
 export const IInterpreterLocatorHelper = Symbol('IInterpreterLocatorHelper');
 export interface IInterpreterLocatorHelper {
-    mergeInterpreters(interpreters: PythonInterpreter[]): Promise<PythonInterpreter[]>;
+    mergeInterpreters(interpreters: PartialPythonEnvironment[]): Promise<PythonInterpreter[]>;
 }
 
 export const IInterpreterWatcher = Symbol('IInterpreterWatcher');
