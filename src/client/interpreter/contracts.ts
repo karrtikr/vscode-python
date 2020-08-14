@@ -3,7 +3,7 @@ import { CodeLensProvider, Disposable, Event, TextDocument, Uri } from 'vscode';
 import { Resource } from '../common/types';
 import { CondaEnvironmentInfo, CondaInfo } from '../pythonEnvironments/discovery/locators/services/conda';
 import { GetInterpreterLocatorOptions } from '../pythonEnvironments/discovery/locators/types';
-import { EnvironmentType, PythonEnvironment } from '../pythonEnvironments/info';
+import { EnvironmentType, PartialPythonEnvironment, PythonEnvironment } from '../pythonEnvironments/info';
 import { WorkspacePythonPath } from './helpers';
 import { GetInterpreterOptions } from './interpreterService';
 
@@ -96,7 +96,7 @@ export interface IPipEnvService extends IInterpreterLocatorService {
 
 export const IInterpreterLocatorHelper = Symbol('IInterpreterLocatorHelper');
 export interface IInterpreterLocatorHelper {
-    mergeInterpreters(interpreters: PythonEnvironment[]): Promise<PythonEnvironment[]>;
+    mergeInterpreters(interpreters: PartialPythonEnvironment[]): Promise<PartialPythonEnvironment[]>;
 }
 
 export const IInterpreterWatcher = Symbol('IInterpreterWatcher');
