@@ -74,6 +74,11 @@ export type PythonEnvironment = InterpreterInformation & {
 };
 
 /**
+ * Python environment containing only partial info. But it will contain the interpreter path.
+ */
+export type PartialPythonEnvironment = Partial<Omit<PythonEnvironment, 'path'>> & { path: string };
+
+/**
  * Convert the Python environment type to a user-facing name.
  */
 export function getInterpreterTypeName(interpreterType: EnvironmentType) {
