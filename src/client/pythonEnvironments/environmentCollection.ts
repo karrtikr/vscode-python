@@ -3,11 +3,9 @@
 
 'use strict';
 
-import * as path from 'path';
-import { Disposable, Event, EventEmitter, Uri } from 'vscode';
+import { Disposable, Event, Uri } from 'vscode';
 import { IFileSystem } from '../common/platform/types';
 import { IDisposableRegistry, IPersistentStateFactory, Resource } from '../common/types';
-import { createDeferred, Deferred } from '../common/utils/async';
 import {
     CONDA_ENV_FILE_SERVICE,
     CONDA_ENV_SERVICE,
@@ -21,9 +19,9 @@ import {
 import { IServiceContainer } from '../ioc/types';
 import { isHiddenInterpreter } from './discovery/locators/services/interpreterFilter';
 import { GetEnvironmentLocatorOptions, IEnvironmentLocatorService } from './discovery/locators/types';
-import { mergeEnvironments, PartialPythonEnvironment, PythonEnvironment } from './info';
+import { PartialPythonEnvironment, PythonEnvironment } from './info';
 import { IEnvironmentInfoService } from './info/environmentInfoService';
-import { isEnvironmentValid, resolvePossibleSymlinkToRealPath } from './utils';
+import { EnvironmentsStorage } from './info/environmentsStorage';
 
 export interface IEnvironmentsCollection {
     readonly onDidChange: Event<void>;
@@ -34,44 +32,28 @@ export interface IEnvironmentsCollection {
     addPath(interpreterPath: string): Promise<void>;
 }
 
-const partialInfoEnvironmentMapKey = 'PARTIAL_INFO_ENVIRONMENT_MAP_KEY';
-const completeInfoEnvironmentMapKey = 'COMPLETE_INFO_ENVIRONMENT_MAP_KEY';
-
 /**
  * Facilitates locating Python environments.
  */
 export class EnvironmentsCollection implements IEnvironmentsCollection {
     public get onDidChange(): Event<void> {
-        return this.didChangeCollectionEmitter.event;
+        return this.environmentsStorage.onDidChange;
     }
-    private readonly partialInfoEnvironmentMap: Map<string, PartialPythonEnvironment>;
-    private readonly completeInfoEnvironmentMap: Map<string, PythonEnvironment>;
 
     private readonly persistentStateFactory: IPersistentStateFactory;
+    private readonly environmentsStorage: EnvironmentsStorage;
     private readonly fileSystem: IFileSystem;
     private readonly environmentsInfo: IEnvironmentInfoService;
-    /**
-     * Resolved to true if environment storage contains atleast one environment.
-     */
-    private readonly didEffortToPopulateStorageSucceed: Deferred<boolean>;
-    private readonly didChangeCollectionEmitter = new EventEmitter<void>();
 
     constructor(private serviceContainer: IServiceContainer) {
         this.environmentsInfo = serviceContainer.get<IEnvironmentInfoService>(IEnvironmentInfoService);
-        this.persistentStateFactory = serviceContainer.get<IPersistentStateFactory>(IPersistentStateFactory);
         this.fileSystem = serviceContainer.get<IFileSystem>(IFileSystem);
-        this.partialInfoEnvironmentMap = this.persistentStateFactory.createGlobalPersistentState(
-            partialInfoEnvironmentMapKey,
-            new Map<string, PartialPythonEnvironment>()
-        ).value;
-        this.completeInfoEnvironmentMap = this.persistentStateFactory.createGlobalPersistentState(
-            completeInfoEnvironmentMapKey,
-            new Map<string, PythonEnvironment>()
-        ).value;
-        this.didEffortToPopulateStorageSucceed = createDeferred<boolean>();
-        if (this.partialInfoEnvironmentMap.size > 0 || this.completeInfoEnvironmentMap.size > 0) {
-            this.didEffortToPopulateStorageSucceed.resolve(true);
-        }
+        this.persistentStateFactory = serviceContainer.get<IPersistentStateFactory>(IPersistentStateFactory);
+        this.environmentsStorage = new EnvironmentsStorage(
+            this.persistentStateFactory,
+            this.environmentsInfo,
+            this.fileSystem
+        );
         const locators = this.getLocators();
         const disposables = serviceContainer.get<Disposable[]>(IDisposableRegistry);
         locators.forEach((locator) => {
@@ -92,67 +74,16 @@ export class EnvironmentsCollection implements IEnvironmentsCollection {
         resource?: Uri,
         options?: GetEnvironmentLocatorOptions
     ): Promise<PartialPythonEnvironment[]> {
-        await removeInvalidEntriesFromEnvironmentMaps([
-            this.partialInfoEnvironmentMap,
-            this.completeInfoEnvironmentMap
-        ]);
         const areAllEnvironmentsStoredPromise = this.getEnvironmentsAndStoreIt(resource, options);
         if (options?.getAllEnvironments) {
             // Wait until all discovered environments are stored into storage
             await areAllEnvironmentsStoredPromise;
         }
-        // Do best effort to return atleast one environment, return an empty list only if no environments are discovered.
-        await Promise.race([
-            this.didEffortToPopulateStorageSucceed.promise,
-            areAllEnvironmentsStoredPromise.then(() => {
-                if (!this.didEffortToPopulateStorageSucceed.completed) {
-                    // Storage still does not contain environments, it means no environments were discovered.
-                    this.didEffortToPopulateStorageSucceed.resolve(false);
-                }
-            })
-        ]);
-
-        const items = [...this.partialInfoEnvironmentMap.values(), ...this.completeInfoEnvironmentMap.values()];
-        return mergeEnvironments(items, this.fileSystem);
+        return this.environmentsStorage.getEnvironments(areAllEnvironmentsStoredPromise);
     }
 
     public async addPath(interpreterPath: string) {
-        await this.addPartialInfo({ path: interpreterPath });
-    }
-
-    private async addPartialInfo(interpreter: PartialPythonEnvironment, options?: GetEnvironmentLocatorOptions) {
-        interpreter.path = path.normalize(resolvePossibleSymlinkToRealPath(interpreter.path));
-        if (this.completeInfoEnvironmentMap.has(interpreter.path)) {
-            return;
-        }
-        const environmentInfoPromise = this.environmentsInfo.getEnvironmentInfo(interpreter.path);
-        if (this.partialInfoEnvironmentMap.has(interpreter.path)) {
-            const storedValue = this.partialInfoEnvironmentMap.get(interpreter.path)!;
-            interpreter = mergeEnvironments([storedValue, interpreter], this.fileSystem)[0];
-        }
-
-        const storeCompleteInfoPromise = environmentInfoPromise.then(async (environmentInfo) => {
-            if (environmentInfo) {
-                const completeEnvironmentInfo = mergeEnvironments(
-                    [environmentInfo, interpreter],
-                    this.fileSystem
-                )[0] as PythonEnvironment;
-                this.completeInfoEnvironmentMap.set(interpreter.path, completeEnvironmentInfo);
-            }
-            if (this.partialInfoEnvironmentMap.has(interpreter.path)) {
-                this.partialInfoEnvironmentMap.delete(interpreter.path);
-            }
-            this.didChangeCollectionEmitter.fire();
-        });
-
-        if (options?.getCompleteInfoForAllEnvironments) {
-            await storeCompleteInfoPromise;
-        } else {
-            // Add to partial environment storage only if the option to getCompleteInfo is not set
-            this.partialInfoEnvironmentMap.set(interpreter.path, interpreter);
-            this.didChangeCollectionEmitter.fire();
-        }
-        this.didEffortToPopulateStorageSucceed.resolve(true);
+        await this.environmentsStorage.addPartialInfo({ path: interpreterPath });
     }
 
     private async getEnvironmentsAndStoreIt(resource?: Uri, options?: GetEnvironmentLocatorOptions) {
@@ -171,12 +102,7 @@ export class EnvironmentsCollection implements IEnvironmentsCollection {
         return Promise.all(
             environments
                 .filter((item) => !isHiddenInterpreter(item))
-                .map((interpreter) =>
-                    this.addPartialInfo(interpreter, options).then(() => {
-                        // It's crucial to resolve this promise as this method waits on this
-                        this.didEffortToPopulateStorageSucceed.resolve(true);
-                    })
-                )
+                .map((interpreter) => this.environmentsStorage.addPartialInfo(interpreter, options))
         );
     }
 
@@ -209,17 +135,4 @@ export class EnvironmentsCollection implements IEnvironmentsCollection {
 
         return locators;
     }
-}
-
-async function removeInvalidEntriesFromEnvironmentMaps(maps: Map<string, PartialPythonEnvironment>[]) {
-    await Promise.all(
-        maps.map((map) => {
-            [...map.entries()].map(async ([key, environment]) => {
-                const isValid = await isEnvironmentValid(environment);
-                if (!isValid) {
-                    map.delete(key);
-                }
-            });
-        })
-    );
 }
