@@ -5,37 +5,39 @@ import * as fsapi from 'fs-extra';
 import { toUpper, uniq } from 'lodash';
 import * as path from 'path';
 import { traceVerbose } from '../../../../common/logger';
+import { FileChangeType } from '../../../../common/platform/fileSystemWatcher';
 import { chain, iterable } from '../../../../common/utils/async';
 import {
     getEnvironmentVariable, getOSType, getUserHomeDir, OSType,
 } from '../../../../common/utils/platform';
-import {
-    PythonEnvInfo, PythonEnvKind, UNKNOWN_PYTHON_VERSION,
-} from '../../../base/info';
+import { PythonEnvInfo, PythonEnvKind, UNKNOWN_PYTHON_VERSION } from '../../../base/info';
 import { buildEnvInfo } from '../../../base/info/env';
-import { ILocator, IPythonEnvsIterator } from '../../../base/locator';
-import { PythonEnvsWatcher } from '../../../base/watcher';
+import { IPythonEnvsIterator, Locator } from '../../../base/locator';
 import { findInterpretersInDir } from '../../../common/commonUtils';
 import { getFileInfo, pathExists } from '../../../common/externalDependencies';
-import { isVenvEnvironment, isVirtualenvEnvironment, isVirtualenvwrapperEnvironment } from './virtualEnvironmentIdentifier';
+import { watchLocationForPythonBinaries } from '../../../common/pythonBinariesWatcher';
+import {
+    isVenvEnvironment,
+    isVirtualenvEnvironment,
+    isVirtualenvwrapperEnvironment,
+} from './virtualEnvironmentIdentifier';
 
 const DEFAULT_SEARCH_DEPTH = 2;
-
 /**
  * Gets all default virtual environment locations. This uses WORKON_HOME,
  * and user home directory to find some known locations where global virtual
  * environments are often created.
  */
 async function getGlobalVirtualEnvDirs(): Promise<string[]> {
-    const venvDirs:string[] = [];
+    const venvDirs: string[] = [];
 
     const workOnHome = getEnvironmentVariable('WORKON_HOME');
-    if (workOnHome && await pathExists(workOnHome)) {
+    if (workOnHome && (await pathExists(workOnHome))) {
         venvDirs.push(workOnHome);
     }
 
     const homeDir = getUserHomeDir();
-    if (homeDir && await pathExists(homeDir)) {
+    if (homeDir && (await pathExists(homeDir))) {
         const os = getOSType();
         let subDirs = ['Envs', 'envs', '.direnv', '.venvs', '.virtualenvs'];
         if (os === OSType.Windows) {
@@ -56,7 +58,7 @@ async function getGlobalVirtualEnvDirs(): Promise<string[]> {
  * and virtualenvwrapper based environments.
  * @param interpreterPath: Absolute path to the interpreter paths.
  */
-async function getVirtualEnvKind(interpreterPath:string): Promise<PythonEnvKind> {
+async function getVirtualEnvKind(interpreterPath: string): Promise<PythonEnvKind> {
     if (await isVenvEnvironment(interpreterPath)) {
         return PythonEnvKind.Venv;
     }
@@ -75,15 +77,12 @@ async function getVirtualEnvKind(interpreterPath:string): Promise<PythonEnvKind>
 /**
  * Finds and resolves virtual environments created in known global locations.
  */
-export class GlobalVirtualEnvironmentLocator extends PythonEnvsWatcher implements ILocator {
-    private virtualEnvKinds = [
-        PythonEnvKind.Venv,
-        PythonEnvKind.VirtualEnv,
-        PythonEnvKind.VirtualEnvWrapper,
-    ];
+export class GlobalVirtualEnvironmentLocator extends Locator {
+    private virtualEnvKinds = [PythonEnvKind.Venv, PythonEnvKind.VirtualEnv, PythonEnvKind.VirtualEnvWrapper];
 
-    public constructor(private readonly searchDepth?:number) {
+    public constructor(private readonly searchDepth?: number) {
         super();
+        this.registerWatchers().ignoreErrors();
     }
 
     public iterEnvs(): IPythonEnvsIterator {
@@ -91,7 +90,7 @@ export class GlobalVirtualEnvironmentLocator extends PythonEnvsWatcher implement
         // interpreters
         const searchDepth = this.searchDepth ?? DEFAULT_SEARCH_DEPTH;
 
-        async function* iterator(virtualEnvKinds:PythonEnvKind[]) {
+        async function* iterator(virtualEnvKinds: PythonEnvKind[]) {
             const envRootDirs = await getGlobalVirtualEnvDirs();
             const envGenerators = envRootDirs.map((envRootDir) => {
                 async function* generator() {
@@ -159,5 +158,12 @@ export class GlobalVirtualEnvironmentLocator extends PythonEnvsWatcher implement
             }
         }
         return undefined;
+    }
+
+    private async registerWatchers(): Promise<void> {
+        const dirs = await getGlobalVirtualEnvDirs();
+        dirs.forEach((d) => watchLocationForPythonBinaries(d, async (type: FileChangeType, executablePath: string) => {
+            this.emitter.fire({ type, kind: await getVirtualEnvKind(executablePath) });
+        }));
     }
 }

@@ -24,3 +24,16 @@ export function watchLocationForPythonBinaries(
         });
     }
 }
+
+export function watchLocationForPythonEnvironments(
+    baseDir: string,
+    callback: (type: FileChangeType, absPath: string) => void,
+): void {
+    watchLocationForPythonBinaries(baseDir, (type: FileChangeType, e: string) => {
+        callback(type, e);
+    });
+}
+
+function notifyCreationWhenReady(type: FileChangeType, e: string) {
+
+}
