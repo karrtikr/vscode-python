@@ -80,6 +80,17 @@ export async function updateSetting(
 ) {
     const vscode = require('vscode') as typeof import('vscode');
     const settings = vscode.workspace.getConfiguration('python', resource || null);
+    if (resource) {
+        console.log('Resource provided');
+        const folder = vscode.workspace.getWorkspaceFolder(resource);
+        if (folder) {
+            console.log('Folder found', folder?.uri.fsPath);
+        } else {
+            console.log('Folder not found');
+        }
+        const x = vscode.workspace.workspaceFolders!;
+        console.log(JSON.stringify(x));
+    }
     const currentValue = settings.inspect(setting);
     if (
         currentValue !== undefined &&
