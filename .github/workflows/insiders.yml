@@ -18,41 +18,6 @@ env:
   VSIX_NAME_JUPYTER: ms-toolsai-jupyter-insiders.vsix
 
 jobs:
-  build-vsix:
-    name: Build VSIX
-    runs-on: ubuntu-latest
-    # if: github.repository == 'microsoft/vscode-python'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-
-      - name: Use Node ${{env.NODE_VERSION}}
-        uses: actions/setup-node@v2.1.2
-        with:
-          node-version: ${{env.NODE_VERSION}}
-
-      - name: Use Python ${{env.PYTHON_VERSION}}
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{env.PYTHON_VERSION}}
-
-      - name: Upgrade pip
-        run: python -m pip install -U pip
-
-      - name: Build VSIX
-        uses: ./.github/actions/build-vsix
-        id: build-vsix
-
-      - name: Rename VSIX
-        if: steps.build-vsix.outputs.path != env.VSIX_NAME
-        run: mv ${{ steps.build-vsix.outputs.path }} ${{ env.VSIX_NAME }}
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: ${{env.ARTIFACT_NAME_VSIX}}
-          path: ${{env.VSIX_NAME}}
-          retention-days: 7
-
   ### Non-smoke tests
   tests:
     name: Tests
