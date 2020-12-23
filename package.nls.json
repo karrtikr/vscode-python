@@ -25,6 +25,7 @@
     "python.command.python.discoverTests.title": "Discover Tests",
     "python.command.python.discoveringTests.title": "Discovering...",
     "python.command.python.stopTests.title": "Stop",
+    "python.command.python.newlineAndIndent.title": "New Line and Indent",
     "python.command.python.configureTests.title": "Configure Tests",
     "python.command.python.execSelectionInTerminal.title": "Run Selection/Line in Python Terminal",
     "python.command.python.execSelectionInDjangoShell.title": "Run Selection/Line in Django Shell",

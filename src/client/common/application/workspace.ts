@@ -6,6 +6,7 @@ import * as path from 'path';
 import {
     CancellationToken,
     ConfigurationChangeEvent,
+    ConfigurationScope,
     Event,
     FileSystemWatcher,
     GlobPattern,
@@ -41,8 +42,8 @@ export class WorkspaceService implements IWorkspaceService {
     public get workspaceFile() {
         return workspace.workspaceFile;
     }
-    public getConfiguration(section?: string, resource?: Uri): WorkspaceConfiguration {
-        return workspace.getConfiguration(section, resource || null);
+    public getConfiguration(section?: string, scope?: ConfigurationScope): WorkspaceConfiguration {
+        return workspace.getConfiguration(section, scope || null);
     }
     public getWorkspaceFolder(uri: Resource): WorkspaceFolder | undefined {
         return uri ? workspace.getWorkspaceFolder(uri) : undefined;

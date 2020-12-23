@@ -5,6 +5,7 @@ import { registerTypes as registerDotNetTypes } from '../common/dotnet/serviceRe
 import { INugetRepository } from '../common/nuget/types';
 import { BANNER_NAME_PROPOSE_LS, IPythonExtensionBanner } from '../common/types';
 import { IServiceManager } from '../ioc/types';
+import { AutoIndent } from '../typeFormatters/autoIndent';
 import { ProposePylanceBanner } from '../languageServices/proposeLanguageServerBanner';
 import { AATesting } from './aaTesting';
 import { ExtensionActivationManager } from './activationManager';
@@ -210,4 +211,5 @@ export function registerTypes(serviceManager: IServiceManager, languageServerTyp
         ExtensionSurveyPrompt,
     );
     serviceManager.addSingleton<IExtensionSingleActivationService>(IExtensionSingleActivationService, AATesting);
+    serviceManager.addSingleton<IExtensionSingleActivationService>(IExtensionSingleActivationService, AutoIndent);
 }

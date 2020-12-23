@@ -47,6 +47,7 @@ export namespace Commands {
     export const Tests_Select_And_Debug_Method = 'python.selectAndDebugTestMethod';
     export const Tests_Select_And_Run_File = 'python.selectAndRunTestFile';
     export const Tests_Run_Current_File = 'python.runCurrentTestFile';
+    export const New_Line_And_Indent = 'python.newlineAndIndent';
     export const Refactor_Extract_Variable = 'python.refactorExtractVariable';
     export const Refactor_Extract_Method = 'python.refactorExtractMethod';
     export const Build_Workspace_Symbols = 'python.buildWorkspaceSymbols';

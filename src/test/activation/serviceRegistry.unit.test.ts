@@ -49,6 +49,7 @@ import { INugetRepository } from '../../client/common/nuget/types';
 import { BANNER_NAME_PROPOSE_LS, IPythonExtensionBanner } from '../../client/common/types';
 import { ServiceManager } from '../../client/ioc/serviceManager';
 import { IServiceManager } from '../../client/ioc/types';
+import { AutoIndent } from '../../client/typeFormatters/autoIndent';
 import { ProposePylanceBanner } from '../../client/languageServices/proposeLanguageServerBanner';
 
 suite('Unit Tests - Language Server Activation Service Registry', () => {
@@ -179,6 +180,12 @@ suite('Unit Tests - Language Server Activation Service Registry', () => {
             serviceManager.addSingleton<IExtensionSingleActivationService>(
                 IExtensionSingleActivationService,
                 ExtensionSurveyPrompt,
+            ),
+        ).once();
+        verify(
+            serviceManager.addSingleton<IExtensionSingleActivationService>(
+                IExtensionSingleActivationService,
+                AutoIndent,
             ),
         ).once();
     });

@@ -7,6 +7,7 @@ import {
     CancellationToken,
     CompletionItemProvider,
     ConfigurationChangeEvent,
+    ConfigurationScope,
     DebugAdapterDescriptorFactory,
     DebugAdapterTrackerFactory,
     DebugConfiguration,
@@ -817,10 +818,10 @@ export interface IWorkspaceService {
      * When a resource is provided, configuration scoped to that resource is returned.
      *
      * @param section A dot-separated identifier.
-     * @param resource A resource for which the configuration is asked for
+     * @param resource A scope for which the configuration is asked for.
      * @return The full configuration or a subset.
      */
-    getConfiguration(section?: string, resource?: Uri): WorkspaceConfiguration;
+    getConfiguration(section?: string, scope?: ConfigurationScope): WorkspaceConfiguration;
 }
 
 export const ITerminalManager = Symbol('ITerminalManager');

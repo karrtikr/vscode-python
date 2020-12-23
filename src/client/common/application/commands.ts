@@ -3,7 +3,7 @@
 
 'use strict';
 
-import { CancellationToken, Position, TextDocument, Uri } from 'vscode';
+import { CancellationToken, Position, TextDocument, TextEditor, TextEditorEdit, Uri } from 'vscode';
 import { Commands as LSCommands } from '../../activation/commands';
 import { CommandSource } from '../../testing/common/constants';
 import { TestFunction, TestsToRun } from '../../testing/common/types';
@@ -84,6 +84,7 @@ export interface ICommandNameArgumentTypeMapping extends ICommandNameWithoutArgu
     ['workbench.action.files.save']: [Uri];
     ['jupyter.opennotebook']: [undefined | Uri, undefined | CommandSource];
     ['jupyter.runallcells']: [Uri];
+    [Commands.New_Line_And_Indent]: [TextEditor, TextEditorEdit, any[]];
     [Commands.GetSelectedInterpreterPath]: [{ workspaceFolder: string } | string[]];
     [Commands.Build_Workspace_Symbols]: [boolean, CancellationToken];
     [Commands.Sort_Imports]: [undefined, Uri];
