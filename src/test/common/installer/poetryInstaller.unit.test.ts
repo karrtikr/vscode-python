@@ -89,7 +89,7 @@ suite('Module Installer - Poetry', () => {
         when(workspaceService.getWorkspaceFolder(anything())).thenReturn({ uri, name: '', index: 0 });
         when(fileSystem.fileExists(anything())).thenResolve(true);
         when(processServiceFactory.create(anything())).thenResolve(instance(processService));
-        when(processService.exec(anything(), anything(), anything())).thenResolve({ stderr: 'Kaboom', stdout: '' });
+        when(processService.shellExec(anything(), anything())).thenResolve({ stderr: 'Kaboom', stdout: '' });
 
         const supported = await poetryInstaller.isSupported(Uri.file(__filename));
 
@@ -105,7 +105,7 @@ suite('Module Installer - Poetry', () => {
         when(workspaceService.getWorkspaceFolder(anything())).thenReturn({ uri, name: '', index: 0 });
         when(fileSystem.fileExists(anything())).thenResolve(true);
         when(processServiceFactory.create(anything())).thenResolve(instance(processService));
-        when(processService.exec(anything(), anything(), anything())).thenReject(new Error('Kaboom'));
+        when(processService.shellExec(anything(), anything())).thenReject(new Error('Kaboom'));
 
         const supported = await poetryInstaller.isSupported(Uri.file(__filename));
 
@@ -121,13 +121,13 @@ suite('Module Installer - Poetry', () => {
         when(workspaceService.getWorkspaceFolder(anything())).thenReturn({ uri, name: '', index: 0 });
         when(fileSystem.fileExists(anything())).thenResolve(true);
         when(processServiceFactory.create(uri)).thenResolve(instance(processService));
-        when(processService.exec('poetry path', anything(), anything())).thenResolve({ stderr: '', stdout: '' });
+        when(processService.shellExec('poetry path', anything())).thenResolve({ stderr: '', stdout: '' });
 
         const supported = await poetryInstaller.isSupported(Uri.file(__filename));
 
         assert.equal(supported, true);
     });
-    test('Get Executable info', async () => {
+    test('Get shellExecutable info', async () => {
         const uri = Uri.file(__dirname);
         const settings = mock(PythonSettings);
 
@@ -136,9 +136,9 @@ suite('Module Installer - Poetry', () => {
 
         const info = await poetryInstaller.getExecutionInfo('something', uri);
 
-        assert.deepEqual(info, { args: ['add', '--dev', 'something'], execPath: 'poetry path' });
+        assert.deepEqual(info, { args: ['add', '--dev', 'something'], shellExecPath: 'poetry path' });
     });
-    test('Get executable info when installing black', async () => {
+    test('Get shellExecutable info when installing black', async () => {
         const uri = Uri.file(__dirname);
         const settings = mock(PythonSettings);
 
@@ -147,6 +147,9 @@ suite('Module Installer - Poetry', () => {
 
         const info = await poetryInstaller.getExecutionInfo('black', uri);
 
-        assert.deepEqual(info, { args: ['add', '--dev', 'black', '--allow-prereleases'], execPath: 'poetry path' });
+        assert.deepEqual(info, {
+            args: ['add', '--dev', 'black', '--allow-prereleases'],
+            shellExecPath: 'poetry path',
+        });
     });
 });
