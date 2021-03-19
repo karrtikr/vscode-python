@@ -29,7 +29,7 @@ export async function isGlobalPoetryEnvironment(interpreterPath: string): Promis
 }
 
 /**
- * Checks if the given interpreter belongs to a local poetry environment, i.e pipenv environment is located inside the project.
+ * Checks if the given interpreter belongs to a local poetry environment, i.e environment is located inside the project.
  * @param {string} interpreterPath: Absolute path to the python interpreter.
  * @returns {boolean} : Returns true if the interpreter belongs to a venv environment.
  */
@@ -51,6 +51,14 @@ export async function isLocalPoetryEnvironment(interpreterPath: string): Promise
     if (!(await pathExists(pyprojectToml))) {
         return false;
     }
+    // The assumption is that we need to be able to run poetry CLI for an environment in order to mark it as poetry.
+    // For that we can either further verify,
+    // - 'pyproject.toml' is valid toml
+    // - 'pyproject.toml' has a poetry section which contains the necessary fields
+    // - Poetry configuration allows local virtual environments
+    // ... possibly more
+    // Or we can simply try running poetry to find the related environment instead. We do the latter for simplicity and reliability.
+    // It should not be much expensive as we have already narrowed down this possibility through various file checks.
     return isPoetryEnvironmentRelatedToFolder(interpreterPath, project, getPythonSetting('poetryPath'));
 }
 
