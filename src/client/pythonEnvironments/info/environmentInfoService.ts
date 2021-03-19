@@ -6,7 +6,6 @@ import { IDisposable } from '../../common/types';
 import { createDeferred, Deferred } from '../../common/utils/async';
 import { createRunningWorkerPool, IWorkerPool, QueuePosition } from '../../common/utils/workerPool';
 import { getInterpreterInfo, InterpreterInformation } from '../base/info/interpreter';
-import { shellExecute } from '../common/externalDependencies';
 import { buildPythonExecInfo } from '../exec';
 
 export enum EnvironmentInfoServiceQueuePriority {
@@ -24,15 +23,12 @@ export interface IEnvironmentInfoService {
 
 async function buildEnvironmentInfo(interpreterPath: string): Promise<InterpreterInformation | undefined> {
     const disposables = new Set<IDisposable>();
-    const interpreterInfo = await getInterpreterInfo(
-        buildPythonExecInfo(interpreterPath),
-        shellExecute,
-        undefined,
-        disposables,
-    ).catch((reason) => {
-        traceVerbose(reason);
-        return undefined;
-    });
+    const interpreterInfo = await getInterpreterInfo(buildPythonExecInfo(interpreterPath), disposables).catch(
+        (reason) => {
+            traceVerbose(reason);
+            return undefined;
+        },
+    );
 
     // Ensure the process we started is cleaned up.
     disposables.forEach((p) => {

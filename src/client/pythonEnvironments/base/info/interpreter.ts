@@ -2,12 +2,14 @@
 // Licensed under the MIT License.
 
 import { PythonExecutableInfo, PythonVersion } from '.';
+import { traceError, traceInfo } from '../../../common/logger';
 import {
     interpreterInfo as getInterpreterInfoCommand,
     InterpreterInfoJson,
 } from '../../../common/process/internal/scripts';
 import { IDisposable } from '../../../common/types';
 import { Architecture } from '../../../common/utils/platform';
+import { shellExecute } from '../../common/externalDependencies';
 import { copyPythonExecInfo, PythonExecInfo } from '../../exec';
 import { parseVersion } from './pythonVersion';
 
@@ -42,18 +44,6 @@ function extractInterpreterInfo(python: string, raw: InterpreterInfoJson): Inter
     };
 }
 
-type ShellExecResult = {
-    stdout: string;
-    stderr?: string;
-};
-type ShellExecFunc = (command: string, timeout: number, disposables?: Set<IDisposable>) => Promise<ShellExecResult>;
-
-type Logger = {
-    info(msg: string): void;
-
-    error(msg: string): void;
-};
-
 /**
  * Collect full interpreter information from the given Python executable.
  *
@@ -63,8 +53,6 @@ type Logger = {
  */
 export async function getInterpreterInfo(
     python: PythonExecInfo,
-    shellExec: ShellExecFunc,
-    logger?: Logger,
     disposables?: Set<IDisposable>,
 ): Promise<InterpreterInformation | undefined> {
     const [args, parse] = getInterpreterInfoCommand();
@@ -80,16 +68,12 @@ export async function getInterpreterInfo(
     // See these two bugs:
     // https://github.com/microsoft/vscode-python/issues/7569
     // https://github.com/microsoft/vscode-python/issues/7760
-    const result = await shellExec(quoted, 15000, disposables);
+    const result = await shellExecute(quoted, { timeout: 15000 }, disposables);
     if (result.stderr) {
-        if (logger) {
-            logger.error(`Failed to parse interpreter information for ${argv} stderr: ${result.stderr}`);
-        }
+        traceError(`Failed to parse interpreter information for ${argv} stderr: ${result.stderr}`);
         return undefined;
     }
     const json = parse(result.stdout);
-    if (logger) {
-        logger.info(`Found interpreter for ${argv}`);
-    }
+    traceInfo(`Found interpreter for ${argv}`);
     return extractInterpreterInfo(python.pythonExecutable, json);
 }
