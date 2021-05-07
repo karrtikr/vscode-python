@@ -39,6 +39,7 @@ import { IServiceContainer } from './ioc/types';
 import { sendErrorTelemetry, sendStartupTelemetry } from './startupTelemetry';
 
 durations.codeLoadingTime = stopWatch.elapsedTime;
+console.log('Code loading time', stopWatch.elapsedTime);
 
 //===============================================
 // loading ends here
@@ -50,6 +51,7 @@ let activatedServiceContainer: IServiceContainer | undefined;
 // public functions
 
 export async function activate(context: IExtensionContext): Promise<IExtensionApi> {
+    console.log('Activation has started', stopWatch.elapsedTime);
     let api: IExtensionApi;
     let ready: Promise<void>;
     let serviceContainer: IServiceContainer;
