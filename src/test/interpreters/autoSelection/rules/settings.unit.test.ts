@@ -58,42 +58,7 @@ suite('Interpreters - Auto Selection - Settings Rule', () => {
             instance(stateFactory),
             instance(workspaceService),
             instance(experimentsManager),
-            instance(interpreterPathService),
         );
-    });
-
-    test('If in experiment, invoke next rule if python Path in user settings is default', async () => {
-        const manager = mock(InterpreterAutoSelectionService);
-        const pythonPathInConfig = {};
-
-        when(experimentsManager.inExperiment(DeprecatePythonPath.experiment)).thenReturn(true);
-        when(interpreterPathService.inspect(undefined)).thenReturn(pythonPathInConfig as any);
-
-        const nextAction = await rule.onAutoSelectInterpreter(undefined, manager);
-
-        expect(nextAction).to.be.equal(NextAction.runNextRule);
-    });
-    test('If in experiment, invoke next rule if python Path in user settings is not defined', async () => {
-        const manager = mock(InterpreterAutoSelectionService);
-        const pythonPathInConfig = { globalValue: 'python' };
-
-        when(experimentsManager.inExperiment(DeprecatePythonPath.experiment)).thenReturn(true);
-        when(interpreterPathService.inspect(undefined)).thenReturn(pythonPathInConfig as any);
-
-        const nextAction = await rule.onAutoSelectInterpreter(undefined, manager);
-
-        expect(nextAction).to.be.equal(NextAction.runNextRule);
-    });
-    test('If in experiment, must not Invoke next rule if python Path in user settings is not default', async () => {
-        const manager = mock(InterpreterAutoSelectionService);
-        const pythonPathInConfig = { globalValue: 'something else' };
-
-        when(experimentsManager.inExperiment(DeprecatePythonPath.experiment)).thenReturn(true);
-        when(interpreterPathService.inspect(undefined)).thenReturn(pythonPathInConfig as any);
-
-        const nextAction = await rule.onAutoSelectInterpreter(undefined, manager);
-
-        expect(nextAction).to.be.equal(NextAction.exit);
     });
 
     test('If not in experiment, invoke next rule if python Path in user settings is default', async () => {
@@ -101,7 +66,7 @@ suite('Interpreters - Auto Selection - Settings Rule', () => {
         const pythonPathInConfig = {};
         const pythonPath = { inspect: () => pythonPathInConfig };
 
-        when(workspaceService.getConfiguration('python', null as any)).thenReturn(pythonPath as any);
+        when(workspaceService.getConfiguration('python', undefined)).thenReturn(pythonPath as any);
 
         const nextAction = await rule.onAutoSelectInterpreter(undefined, manager);
 
@@ -112,7 +77,7 @@ suite('Interpreters - Auto Selection - Settings Rule', () => {
         const pythonPathInConfig = { globalValue: 'python' };
         const pythonPath = { inspect: () => pythonPathInConfig };
 
-        when(workspaceService.getConfiguration('python', null as any)).thenReturn(pythonPath as any);
+        when(workspaceService.getConfiguration('python', undefined)).thenReturn(pythonPath as any);
 
         const nextAction = await rule.onAutoSelectInterpreter(undefined, manager);
 
@@ -123,7 +88,7 @@ suite('Interpreters - Auto Selection - Settings Rule', () => {
         const pythonPathInConfig = { globalValue: 'something else' };
         const pythonPath = { inspect: () => pythonPathInConfig };
 
-        when(workspaceService.getConfiguration('python', null as any)).thenReturn(pythonPath as any);
+        when(workspaceService.getConfiguration('python', undefined)).thenReturn(pythonPath as any);
 
         const nextAction = await rule.onAutoSelectInterpreter(undefined, manager);
 

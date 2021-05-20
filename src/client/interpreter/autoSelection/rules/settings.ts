@@ -7,7 +7,7 @@ import { inject, injectable } from 'inversify';
 import { IWorkspaceService } from '../../../common/application/types';
 import { DeprecatePythonPath } from '../../../common/experiments/groups';
 import { IFileSystem } from '../../../common/platform/types';
-import { IExperimentsManager, IInterpreterPathService, IPersistentStateFactory, Resource } from '../../../common/types';
+import { IExperimentsManager, IPersistentStateFactory, Resource } from '../../../common/types';
 import { AutoSelectionRule, IInterpreterAutoSelectionService } from '../types';
 import { BaseRuleService, NextAction } from './baseRule';
 
@@ -18,22 +18,19 @@ export class SettingsInterpretersAutoSelectionRule extends BaseRuleService {
         @inject(IPersistentStateFactory) stateFactory: IPersistentStateFactory,
         @inject(IWorkspaceService) private readonly workspaceService: IWorkspaceService,
         @inject(IExperimentsManager) private readonly experiments: IExperimentsManager,
-        @inject(IInterpreterPathService) private readonly interpreterPathService: IInterpreterPathService,
     ) {
         super(AutoSelectionRule.settings, fs, stateFactory);
     }
     protected async onAutoSelectInterpreter(
-        _resource: Resource,
+        resource: Resource,
         _manager?: IInterpreterAutoSelectionService,
     ): Promise<NextAction> {
-        const pythonConfig = this.workspaceService.getConfiguration('python', null as any)!;
+        const pythonConfig = this.workspaceService.getConfiguration('python', resource)!;
         const pythonPathInConfig = this.experiments.inExperiment(DeprecatePythonPath.experiment)
-            ? this.interpreterPathService.inspect(undefined)
-            : pythonConfig.inspect<string>('pythonPath')!;
+            ? pythonConfig.get<string>('defaultInterpreterPath')
+            : pythonConfig.inspect<string>('pythonPath')?.globalValue;
         this.experiments.sendTelemetryIfInExperiment(DeprecatePythonPath.control);
         // No need to store python paths defined in settings in our caches, they can be retrieved from the settings directly.
-        return pythonPathInConfig.globalValue && pythonPathInConfig.globalValue !== 'python'
-            ? NextAction.exit
-            : NextAction.runNextRule;
+        return pythonPathInConfig && pythonPathInConfig !== 'python' ? NextAction.exit : NextAction.runNextRule;
     }
 }
