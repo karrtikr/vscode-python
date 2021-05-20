@@ -60,6 +60,27 @@ suite('Interpreters - Auto Selection - Settings Rule', () => {
             instance(experimentsManager),
         );
     });
+    test('If in experiment, invoke next rule if default interpreter path is default', async () => {
+        const manager = mock(InterpreterAutoSelectionService);
+        const pythonPath = { get: () => 'python' };
+        when(experimentsManager.inExperiment(DeprecatePythonPath.experiment)).thenReturn(true);
+        when(workspaceService.getConfiguration('python', undefined)).thenReturn(pythonPath as any);
+
+        const nextAction = await rule.onAutoSelectInterpreter(undefined, manager);
+
+        expect(nextAction).to.be.equal(NextAction.runNextRule);
+    });
+
+    test('If in experiment, do not invoke next rule if default interpreter path is not default', async () => {
+        const manager = mock(InterpreterAutoSelectionService);
+        const pythonPath = { get: () => 'path/to/python' };
+        when(experimentsManager.inExperiment(DeprecatePythonPath.experiment)).thenReturn(true);
+        when(workspaceService.getConfiguration('python', undefined)).thenReturn(pythonPath as any);
+
+        const nextAction = await rule.onAutoSelectInterpreter(undefined, manager);
+
+        expect(nextAction).to.be.equal(NextAction.exit);
+    });
 
     test('If not in experiment, invoke next rule if python Path in user settings is default', async () => {
         const manager = mock(InterpreterAutoSelectionService);
