@@ -449,7 +449,9 @@ suite('Interpreter Path Service', async () => {
 
     test('Inspecting settings returns as expected if no workspace is opened', async () => {
         const workspaceConfig = TypeMoq.Mock.ofType<WorkspaceConfiguration>();
-        workspaceService.setup((w) => w.getConfiguration('python')).returns(() => workspaceConfig.object);
+        workspaceService
+            .setup((w) => w.getConfiguration('python', TypeMoq.It.isAny()))
+            .returns(() => workspaceConfig.object);
         workspaceConfig
             .setup((w) => w.inspect<string>('defaultInterpreterPath'))
             .returns(
@@ -481,7 +483,7 @@ suite('Interpreter Path Service', async () => {
         // No workspace file is present if a folder is directly opened
         workspaceService.setup((w) => w.workspaceFile).returns(() => undefined);
         workspaceService.setup((w) => w.getWorkspaceFolderIdentifier(resource)).returns(() => resource.fsPath);
-        workspaceService.setup((w) => w.getConfiguration('python')).returns(() => workspaceConfig.object);
+        workspaceService.setup((w) => w.getConfiguration('python', resource)).returns(() => workspaceConfig.object);
         workspaceConfig
             .setup((w) => w.inspect<string>('defaultInterpreterPath'))
             .returns(
@@ -517,7 +519,7 @@ suite('Interpreter Path Service', async () => {
         // A workspace file is present in case of multiroot workspace folders
         workspaceService.setup((w) => w.workspaceFile).returns(() => workspaceFileUri);
         workspaceService.setup((w) => w.getWorkspaceFolderIdentifier(resource)).returns(() => resource.fsPath);
-        workspaceService.setup((w) => w.getConfiguration('python')).returns(() => workspaceConfig.object);
+        workspaceService.setup((w) => w.getConfiguration('python', resource)).returns(() => workspaceConfig.object);
         workspaceConfig
             .setup((w) => w.inspect<string>('defaultInterpreterPath'))
             .returns(
@@ -557,16 +559,6 @@ suite('Interpreter Path Service', async () => {
         });
         const settingValue = interpreterPathService.get(resource);
         expect(settingValue).to.equal('workspaceFolderValue');
-    });
-
-    test(`Getting setting value returns workspace value if workspace folder value is 'undefined'`, async () => {
-        interpreterPathService.inspect = () => ({
-            globalValue: 'default/path/to/interpreter',
-            workspaceFolderValue: undefined,
-            workspaceValue: 'workspaceValue',
-        });
-        const settingValue = interpreterPathService.get(resource);
-        expect(settingValue).to.equal('workspaceValue');
     });
 
     test(`Getting setting value returns workspace value if workspace folder value is 'undefined'`, async () => {
