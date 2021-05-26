@@ -23,9 +23,6 @@ suite('Startup Telemetry - hasUserDefinedPythonPath()', async () => {
         experimentsManager = TypeMoq.Mock.ofType<IExperimentsManager>();
         interpreterPathService = TypeMoq.Mock.ofType<IInterpreterPathService>();
         workspaceService = TypeMoq.Mock.ofType<IWorkspaceService>();
-        experimentsManager
-            .setup((e) => e.sendTelemetryIfInExperiment(DeprecatePythonPath.control))
-            .returns(() => undefined);
         serviceContainer.setup((s) => s.get(IExperimentsManager)).returns(() => experimentsManager.object);
         serviceContainer.setup((s) => s.get(IWorkspaceService)).returns(() => workspaceService.object);
         serviceContainer.setup((s) => s.get(IInterpreterPathService)).returns(() => interpreterPathService.object);
