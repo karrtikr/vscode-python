@@ -2,7 +2,6 @@
 // Licensed under the MIT License.
 import { IExtensionSingleActivationService } from '../activation/types';
 import {
-    IExperimentService,
     IFileDownloader,
     IHttpClient,
     IInterpreterPathService,
@@ -48,7 +47,6 @@ import { ConfigurationService } from './configuration/service';
 import { PipEnvExecutionPath } from './configuration/executionSettings/pipEnvExecution';
 import { CryptoUtils } from './crypto';
 import { EditorUtils } from './editor';
-import { ExperimentsManager } from './experiments/manager';
 import { ExperimentService } from './experiments/service';
 import {
     ExtensionInsidersDailyChannelRule,
@@ -110,7 +108,7 @@ import {
     ICryptoUtils,
     ICurrentProcess,
     IEditorUtils,
-    IExperimentsManager,
+    IExperimentService,
     IExtensions,
     IInstaller,
     IPathUtils,
@@ -161,7 +159,6 @@ export function registerTypes(serviceManager: IServiceManager) {
         PowershellTerminalActivationFailedHandler,
     );
     serviceManager.addSingleton<ICryptoUtils>(ICryptoUtils, CryptoUtils);
-    serviceManager.addSingleton<IExperimentsManager>(IExperimentsManager, ExperimentsManager);
     serviceManager.addSingleton<IExperimentService>(IExperimentService, ExperimentService);
 
     serviceManager.addSingleton<ITerminalHelper>(ITerminalHelper, TerminalHelper);
